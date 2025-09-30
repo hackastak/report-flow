@@ -9,6 +9,11 @@ import {
   ScheduleConfigurationForm,
   type ScheduleConfig,
 } from "../components/ScheduleConfigurationForm";
+import {
+  EmailRecipientsForm,
+  type Recipient,
+  validateRecipients,
+} from "../components/EmailRecipientsForm";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticate.admin(request);
@@ -38,6 +43,7 @@ export default function NewReport() {
     timeOfDay: "09:00",
     timezone: "UTC",
   });
+  const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleFilterChange = (filters: Record<string, any>) => {
@@ -48,6 +54,18 @@ export default function NewReport() {
     setScheduleConfig(config);
   };
 
+  const handleRecipientsChange = (newRecipients: Recipient[]) => {
+    setRecipients(newRecipients);
+    // Clear recipients error if any
+    if (errors.recipients) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.recipients;
+        return newErrors;
+      });
+    }
+  };
+
   const handleSave = () => {
     // Validation
     const newErrors: Record<string, string> = {};
@@ -56,8 +74,16 @@ export default function NewReport() {
       newErrors.reportName = "Report name is required";
     }
 
+    // Validate recipients
+    const recipientValidation = validateRecipients(recipients, 1);
+    if (!recipientValidation.isValid) {
+      newErrors.recipients = recipientValidation.error || "Invalid recipients";
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      // Scroll to top to show errors
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
@@ -68,7 +94,11 @@ export default function NewReport() {
       type: reportConfig.type,
       filters: filterValues,
       schedule: scheduleConfig,
+      recipients: recipients,
     });
+
+    // TODO: Show success message and redirect
+    alert("Report configuration saved! (This will be replaced with proper save functionality)");
   };
 
   return (
@@ -166,14 +196,24 @@ export default function NewReport() {
         </div>
       </s-section>
 
-      {/* Coming Soon Banner */}
-      <s-section heading="Next Steps">
-        <s-banner variant="info">
-          <s-paragraph>
-            Email recipient management will be added in the next step. For now, you
-            can configure the report name, filters, and schedule.
-          </s-paragraph>
-        </s-banner>
+      {/* Email Recipients Configuration */}
+      <s-section heading="Email Recipients">
+        <s-paragraph>
+          Add email addresses of people who should receive this report.
+        </s-paragraph>
+        <div style={{ marginTop: "1rem" }}>
+          <EmailRecipientsForm
+            onChange={handleRecipientsChange}
+            minRecipients={1}
+          />
+        </div>
+        {errors.recipients && (
+          <div style={{ marginTop: "1rem" }}>
+            <s-banner variant="critical">
+              <s-paragraph>{errors.recipients}</s-paragraph>
+            </s-banner>
+          </div>
+        )}
       </s-section>
 
       {/* Action Buttons */}
@@ -183,7 +223,7 @@ export default function NewReport() {
             <s-button variant="secondary">Cancel</s-button>
           </Link>
           <s-button variant="primary" onClick={handleSave}>
-            Continue to Email Recipients
+            Save Report Schedule
           </s-button>
         </s-stack>
       </s-section>
@@ -218,6 +258,20 @@ export default function NewReport() {
           </div>
 
           <div>
+            <s-text weight="bold">Recipients:</s-text>
+            <div style={{ marginTop: "0.5rem" }}>
+              {recipients.length > 0 ? (
+                <s-text variant="subdued">
+                  {recipients.length} recipient
+                  {recipients.length !== 1 ? "s" : ""} added
+                </s-text>
+              ) : (
+                <s-text variant="subdued">No recipients yet</s-text>
+              )}
+            </div>
+          </div>
+
+          <div>
             <s-text weight="bold">Export Format:</s-text>
             <div style={{ marginTop: "0.25rem" }}>
               <s-badge variant="success">CSV</s-badge>
@@ -229,8 +283,8 @@ export default function NewReport() {
       <s-section slot="aside" heading="Help">
         <s-paragraph>
           <s-text variant="subdued">
-            Configure your report filters to customize the data that will be
-            included. Required filters must be set before saving.
+            Configure your report settings, filters, schedule, and recipients.
+            All required fields must be completed before saving.
           </s-text>
         </s-paragraph>
       </s-section>
