@@ -140,6 +140,11 @@ export default function Index() {
               Create Your First Report
             </s-button>
           </s-link>
+          <s-link href="/app/reports/scheduled">
+            <s-button variant="secondary" style={{ width: "100%" }}>
+              View Scheduled Reports
+            </s-button>
+          </s-link>
         </s-stack>
       </s-section>
 
@@ -147,6 +152,9 @@ export default function Index() {
         <s-unordered-list>
           <s-list-item>
             <s-link href="/app/reports">View all report types</s-link>
+          </s-list-item>
+          <s-list-item>
+            <s-link href="/app/reports/scheduled">Manage scheduled reports</s-link>
           </s-list-item>
           <s-list-item>
             <s-link
