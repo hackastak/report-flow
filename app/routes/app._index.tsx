@@ -1,11 +1,7 @@
-import { useEffect } from "react";
 import type {
-  ActionFunctionArgs,
   HeadersFunction,
   LoaderFunctionArgs,
 } from "react-router";
-import { useFetcher } from "react-router";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 
@@ -15,231 +11,149 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return null;
 };
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
-  const color = ["Red", "Orange", "Yellow", "Green"][
-    Math.floor(Math.random() * 4)
-  ];
-  const response = await admin.graphql(
-    `#graphql
-      mutation populateProduct($product: ProductCreateInput!) {
-        productCreate(product: $product) {
-          product {
-            id
-            title
-            handle
-            status
-            variants(first: 10) {
-              edges {
-                node {
-                  id
-                  price
-                  barcode
-                  createdAt
-                }
-              }
-            }
-          }
-        }
-      }`,
-    {
-      variables: {
-        product: {
-          title: `${color} Snowboard`,
-        },
-      },
-    },
-  );
-  const responseJson = await response.json();
-
-  const product = responseJson.data!.productCreate!.product!;
-  const variantId = product.variants.edges[0]!.node!.id!;
-
-  const variantResponse = await admin.graphql(
-    `#graphql
-    mutation shopifyReactRouterTemplateUpdateVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
-      productVariantsBulkUpdate(productId: $productId, variants: $variants) {
-        productVariants {
-          id
-          price
-          barcode
-          createdAt
-        }
-      }
-    }`,
-    {
-      variables: {
-        productId: product.id,
-        variants: [{ id: variantId, price: "100.00" }],
-      },
-    },
-  );
-
-  const variantResponseJson = await variantResponse.json();
-
-  return {
-    product: responseJson!.data!.productCreate!.product,
-    variant:
-      variantResponseJson!.data!.productVariantsBulkUpdate!.productVariants,
-  };
-};
-
 export default function Index() {
-  const fetcher = useFetcher<typeof action>();
-
-  const shopify = useAppBridge();
-  const isLoading =
-    ["loading", "submitting"].includes(fetcher.state) &&
-    fetcher.formMethod === "POST";
-  const productId = fetcher.data?.product?.id.replace(
-    "gid://shopify/Product/",
-    "",
-  );
-
-  useEffect(() => {
-    if (productId) {
-      shopify.toast.show("Product created");
-    }
-  }, [productId, shopify]);
-  const generateProduct = () => fetcher.submit({}, { method: "POST" });
 
   return (
-    <s-page heading="React Router app template">
-      <s-button slot="primary-action" onClick={generateProduct}>
-        Generate a product
-      </s-button>
+    <s-page heading="Report Flow">
+      <s-link slot="primary-action" href="/app/reports">
+        <s-button variant="primary">Create Scheduled Report</s-button>
+      </s-link>
 
-      <s-section heading="Congrats on creating a new Shopify app 🎉">
+      <s-section heading="Welcome to Report Flow 📊">
         <s-paragraph>
-          This embedded app template uses{" "}
-          <s-link
-            href="https://shopify.dev/docs/apps/tools/app-bridge"
-            target="_blank"
-          >
-            App Bridge
-          </s-link>{" "}
-          interface examples like an{" "}
-          <s-link href="/app/additional">additional page in the app nav</s-link>
-          , as well as an{" "}
-          <s-link
-            href="https://shopify.dev/docs/api/admin-graphql"
-            target="_blank"
-          >
-            Admin GraphQL
-          </s-link>{" "}
-          mutation demo, to provide a starting point for app development.
+          Automate your Shopify analytics reporting. Schedule reports to be
+          generated and emailed to your team automatically - no more manual
+          exports!
         </s-paragraph>
       </s-section>
-      <s-section heading="Get started with products">
-        <s-paragraph>
-          Generate a product with GraphQL and get the JSON output for that
-          product. Learn more about the{" "}
-          <s-link
-            href="https://shopify.dev/docs/api/admin-graphql/latest/mutations/productCreate"
-            target="_blank"
-          >
-            productCreate
-          </s-link>{" "}
-          mutation in our API references.
-        </s-paragraph>
-        <s-stack direction="inline" gap="base">
-          <s-button
-            onClick={generateProduct}
-            {...(isLoading ? { loading: true } : {})}
-          >
-            Generate a product
-          </s-button>
-          {fetcher.data?.product && (
-            <s-button
-              href={`shopify:admin/products/${productId}`}
-              target="_blank"
-              variant="tertiary"
-            >
-              View product
-            </s-button>
-          )}
-        </s-stack>
-        {fetcher.data?.product && (
-          <s-section heading="productCreate mutation">
-            <s-stack direction="block" gap="base">
-              <s-box
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
-                <pre style={{ margin: 0 }}>
-                  <code>{JSON.stringify(fetcher.data.product, null, 2)}</code>
-                </pre>
-              </s-box>
 
-              <s-heading>productVariantsBulkUpdate mutation</s-heading>
-              <s-box
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
-                <pre style={{ margin: 0 }}>
-                  <code>{JSON.stringify(fetcher.data.variant, null, 2)}</code>
-                </pre>
-              </s-box>
+      <s-section heading="Quick Start">
+        <s-stack direction="block" gap="base">
+          <s-box
+            padding="base"
+            borderWidth="base"
+            borderRadius="base"
+            background="surface"
+          >
+            <s-stack direction="inline" gap="base" alignment="start">
+              <div style={{ fontSize: "2rem", lineHeight: 1 }}>1️⃣</div>
+              <s-stack direction="block" gap="tight">
+                <s-heading level={3}>Choose a Report Type</s-heading>
+                <s-text variant="subdued">
+                  Select from Sales, Orders, Products, Customers, Inventory,
+                  Traffic, or Discounts reports
+                </s-text>
+              </s-stack>
             </s-stack>
-          </s-section>
-        )}
+          </s-box>
+
+          <s-box
+            padding="base"
+            borderWidth="base"
+            borderRadius="base"
+            background="surface"
+          >
+            <s-stack direction="inline" gap="base" alignment="start">
+              <div style={{ fontSize: "2rem", lineHeight: 1 }}>2️⃣</div>
+              <s-stack direction="block" gap="tight">
+                <s-heading level={3}>Configure Filters</s-heading>
+                <s-text variant="subdued">
+                  Set up date ranges, product filters, order status, and more
+                </s-text>
+              </s-stack>
+            </s-stack>
+          </s-box>
+
+          <s-box
+            padding="base"
+            borderWidth="base"
+            borderRadius="base"
+            background="surface"
+          >
+            <s-stack direction="inline" gap="base" alignment="start">
+              <div style={{ fontSize: "2rem", lineHeight: 1 }}>3️⃣</div>
+              <s-stack direction="block" gap="tight">
+                <s-heading level={3}>Set Schedule & Recipients</s-heading>
+                <s-text variant="subdued">
+                  Choose when to send (daily, weekly, monthly) and who receives
+                  the reports
+                </s-text>
+              </s-stack>
+            </s-stack>
+          </s-box>
+
+          <s-box
+            padding="base"
+            borderWidth="base"
+            borderRadius="base"
+            background="surface"
+          >
+            <s-stack direction="inline" gap="base" alignment="start">
+              <div style={{ fontSize: "2rem", lineHeight: 1 }}>✅</div>
+              <s-stack direction="block" gap="tight">
+                <s-heading level={3}>Sit Back & Relax</s-heading>
+                <s-text variant="subdued">
+                  Reports are automatically generated and emailed on schedule
+                </s-text>
+              </s-stack>
+            </s-stack>
+          </s-box>
+        </s-stack>
       </s-section>
 
-      <s-section slot="aside" heading="App template specs">
-        <s-paragraph>
-          <s-text>Framework: </s-text>
-          <s-link href="https://reactrouter.com/" target="_blank">
-            React Router
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>Interface: </s-text>
-          <s-link
-            href="https://shopify.dev/docs/api/app-home/using-polaris-components"
-            target="_blank"
-          >
-            Polaris web components
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>API: </s-text>
-          <s-link
-            href="https://shopify.dev/docs/api/admin-graphql"
-            target="_blank"
-          >
-            GraphQL
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>Database: </s-text>
-          <s-link href="https://www.prisma.io/" target="_blank">
-            Prisma
-          </s-link>
-        </s-paragraph>
+      <s-section heading="Features">
+        <s-stack direction="block" gap="base">
+          <s-unordered-list>
+            <s-list-item>
+              <s-text weight="bold">7 Report Types</s-text> - Sales, Orders,
+              Products, Customers, Inventory, Traffic, and Discounts
+            </s-list-item>
+            <s-list-item>
+              <s-text weight="bold">Flexible Scheduling</s-text> - Daily,
+              weekly, or monthly delivery
+            </s-list-item>
+            <s-list-item>
+              <s-text weight="bold">Custom Filters</s-text> - Date ranges,
+              product types, order status, and more
+            </s-list-item>
+            <s-list-item>
+              <s-text weight="bold">Multiple Recipients</s-text> - Send to your
+              entire team
+            </s-list-item>
+            <s-list-item>
+              <s-text weight="bold">CSV Export</s-text> - Easy to import into
+              Excel or Google Sheets
+            </s-list-item>
+            <s-list-item>
+              <s-text weight="bold">Execution History</s-text> - Track when
+              reports were sent and their status
+            </s-list-item>
+          </s-unordered-list>
+        </s-stack>
       </s-section>
 
-      <s-section slot="aside" heading="Next steps">
+
+      <s-section slot="aside" heading="Getting Started">
+        <s-stack direction="block" gap="base">
+          <s-link href="/app/reports">
+            <s-button variant="primary" style={{ width: "100%" }}>
+              Create Your First Report
+            </s-button>
+          </s-link>
+        </s-stack>
+      </s-section>
+
+      <s-section slot="aside" heading="Resources">
         <s-unordered-list>
           <s-list-item>
-            Build an{" "}
-            <s-link
-              href="https://shopify.dev/docs/apps/getting-started/build-app-example"
-              target="_blank"
-            >
-              example app
-            </s-link>
+            <s-link href="/app/reports">View all report types</s-link>
           </s-list-item>
           <s-list-item>
-            Explore Shopify&apos;s API with{" "}
             <s-link
-              href="https://shopify.dev/docs/apps/tools/graphiql-admin-api"
+              href="https://shopify.dev/docs/api/admin-graphql"
               target="_blank"
             >
-              GraphiQL
+              Shopify GraphQL API
             </s-link>
           </s-list-item>
         </s-unordered-list>
