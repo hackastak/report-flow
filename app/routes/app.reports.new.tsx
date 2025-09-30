@@ -5,6 +5,10 @@ import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { getReportTypeConfig, isValidReportType } from "../config/reportTypes";
 import { FilterConfigurationForm } from "../components/FilterConfigurationForm";
+import {
+  ScheduleConfigurationForm,
+  type ScheduleConfig,
+} from "../components/ScheduleConfigurationForm";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticate.admin(request);
@@ -29,10 +33,19 @@ export default function NewReport() {
   const [reportName, setReportName] = useState("");
   const [reportDescription, setReportDescription] = useState("");
   const [filterValues, setFilterValues] = useState<Record<string, any>>({});
+  const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>({
+    frequency: "DAILY",
+    timeOfDay: "09:00",
+    timezone: "UTC",
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleFilterChange = (filters: Record<string, any>) => {
     setFilterValues(filters);
+  };
+
+  const handleScheduleChange = (config: ScheduleConfig) => {
+    setScheduleConfig(config);
   };
 
   const handleSave = () => {
@@ -54,6 +67,7 @@ export default function NewReport() {
       description: reportDescription,
       type: reportConfig.type,
       filters: filterValues,
+      schedule: scheduleConfig,
     });
   };
 
@@ -142,12 +156,22 @@ export default function NewReport() {
         </div>
       </s-section>
 
+      {/* Schedule Configuration */}
+      <s-section heading="Set Schedule">
+        <s-paragraph>
+          Choose when and how often this report should run automatically.
+        </s-paragraph>
+        <div style={{ marginTop: "1rem" }}>
+          <ScheduleConfigurationForm onChange={handleScheduleChange} />
+        </div>
+      </s-section>
+
       {/* Coming Soon Banner */}
       <s-section heading="Next Steps">
         <s-banner variant="info">
           <s-paragraph>
-            Schedule configuration and email recipient management will be added in
-            the next steps. For now, you can configure the report name and filters.
+            Email recipient management will be added in the next step. For now, you
+            can configure the report name, filters, and schedule.
           </s-paragraph>
         </s-banner>
       </s-section>
@@ -159,7 +183,7 @@ export default function NewReport() {
             <s-button variant="secondary">Cancel</s-button>
           </Link>
           <s-button variant="primary" onClick={handleSave}>
-            Continue to Schedule Setup
+            Continue to Email Recipients
           </s-button>
         </s-stack>
       </s-section>
