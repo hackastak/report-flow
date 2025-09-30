@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+  provider = "sqlite"
+  url      = "file:dev.sqlite"
+}
+
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+}
+
+// Report Scheduling Models
+model ReportSchedule {
+  id          String   @id @default(uuid())
+  shop        String   // Which Shopify store this belongs to
+  name        String   // User-defined name for the report
+  description String?  // Optional description
+  reportType  String   // Type of report: SALES, ORDERS, PRODUCTS, CUSTOMERS, TRAFFIC, INVENTORY
+
+  // Scheduling configuration
+  frequency   String   // DAILY, WEEKLY, MONTHLY, CUSTOM
+  timeOfDay   String   // Time to run (HH:MM format, 24-hour)
+  dayOfWeek   Int?     // For weekly: 0=Sunday, 1=Monday, etc.
+  dayOfMonth  Int?     // For monthly: 1-31
+  timezone    String   @default("UTC") // Timezone for scheduling
+
+  // Status
+  isActive    Boolean  @default(true)
+  lastRunAt   DateTime?
+  nextRunAt   DateTime?
+
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  filters     ReportFilter[]
+  recipients  ReportRecipient[]
+  history     ReportHistory[]
+
+  @@index([shop])
+  @@index([isActive, nextRunAt])
+}
+
+model ReportFilter {
+  id               String   @id @default(uuid())
+  reportScheduleId String
+  reportSchedule   ReportSchedule @relation(fields: [reportScheduleId], references: [id], onDelete: Cascade)
+
+  // Filter configuration stored as key-value pairs
+  filterKey        String   // e.g., "dateRange", "productType", "orderStatus"
+  filterValue      String   // JSON string for complex values
+
+  createdAt        DateTime @default(now())
+
+  @@index([reportScheduleId])
+}
+
+model ReportRecipient {
+  id               String   @id @default(uuid())
+  reportScheduleId String
+  reportSchedule   ReportSchedule @relation(fields: [reportScheduleId], references: [id], onDelete: Cascade)
+
+  email            String
+  name             String?  // Optional recipient name
+
+  createdAt        DateTime @default(now())
+
+  @@index([reportScheduleId])
+}
+
+model ReportHistory {
+  id               String   @id @default(uuid())
+  reportScheduleId String
+  reportSchedule   ReportSchedule @relation(fields: [reportScheduleId], references: [id], onDelete: Cascade)
+
+  // Execution details
+  status           String   // SUCCESS, FAILED, RUNNING
+  startedAt        DateTime @default(now())
+  completedAt      DateTime?
+
+  // Results
+  recordCount      Int?     // Number of records in the report
+  fileSize         Int?     // Size of generated file in bytes
+  filePath         String?  // Path to generated file (if stored)
+
+  // Error tracking
+  errorMessage     String?
+  errorDetails     String?  // JSON string with detailed error info
+
+  // Email delivery
+  emailsSent       Int      @default(0)
+  emailsFailed     Int      @default(0)
+
+  @@index([reportScheduleId])
+  @@index([status])
+  @@index([startedAt])
+}
