@@ -3,7 +3,7 @@
 ## Project Status
 
 **Current Phase:** Development - Backend API & Services
-**Progress:** 9 of 22 tasks complete (41%)
+**Progress:** 10 of 22 tasks complete (45%)
 **Last Updated:** 2025-09-30
 
 ---
@@ -275,28 +275,55 @@
 
 ---
 
-### Phase 4: Backend API 🔄 0/3 COMPLETE
+### Phase 4: Backend API 🔄 1/3 COMPLETE
 
-#### ⏳ Task 10: Implement Report CRUD API Routes
-**Status:** Not Started  
+#### ✅ Task 10: Implement Report CRUD API Routes
+**Status:** Complete
 **Description:** Create API routes for creating, reading, updating, and deleting scheduled reports with proper validation and error handling
 
-**Planned Deliverables:**
-- [ ] POST /api/reports - Create new report
-- [ ] GET /api/reports - List all reports
-- [ ] GET /api/reports/:id - Get single report
-- [ ] PUT /api/reports/:id - Update report
-- [ ] DELETE /api/reports/:id - Delete report
-- [ ] Validation middleware
-- [ ] Error handling
-- [ ] Tests
+**Deliverables:**
+- [x] POST /api/reports - Create new report
+- [x] GET /api/reports - List all reports
+- [x] GET /api/reports/:id - Get single report
+- [x] PUT /api/reports/:id - Update report
+- [x] DELETE /api/reports/:id - Delete report
+- [x] POST /api/reports/:id/run - Run report manually
+- [x] Validation function
+- [x] Error handling
+- [x] Database integration
+- [x] UI integration
+- [x] Documentation
 
-**Validation Requirements:**
-- Report name required
+**Validation Implemented:**
+- Report name required (1-100 characters)
 - Report type must be valid
-- Filters must match report type
-- Schedule must be valid
+- Schedule frequency must be valid (DAILY, WEEKLY, MONTHLY, CUSTOM)
+- Time format validation (HH:MM)
+- Timezone required
+- Day of week required for weekly (0-6)
+- Day of month required for monthly (1-31 or -1)
 - At least one recipient required
+- Email format validation
+
+**Features Implemented:**
+- Full CRUD operations
+- Shop-based data isolation
+- Cascade delete for related records
+- Next run time calculation
+- Filter and recipient management
+- Error responses with codes
+- Success/failure messages
+
+**Files Created:**
+- `app/routes/api.reports.tsx` (240 lines)
+- `app/routes/api.reports.$id.tsx` (300+ lines)
+- `app/routes/api.reports.$id.run.tsx` (100 lines)
+- `docs/API_ROUTES.md`
+
+**Files Modified:**
+- `app/db.server.ts` (added named export)
+- `app/routes/app.reports.new.tsx` (integrated save API)
+- `app/routes/app.reports.scheduled.tsx` (integrated list/delete/run APIs)
 
 ---
 
@@ -545,15 +572,15 @@
 | Phase 1: Foundation | 4 | 4 | 0 | 0 | 100% ✅ |
 | Phase 2: User Interface | 4 | 4 | 0 | 0 | 100% ✅ |
 | Phase 3: Report Management | 1 | 1 | 0 | 0 | 100% ✅ |
-| Phase 4: Backend API | 3 | 0 | 0 | 3 | 0% ⏳ |
+| Phase 4: Backend API | 3 | 1 | 0 | 2 | 33% 🔄 |
 | Phase 5: Email & Execution | 3 | 0 | 0 | 3 | 0% ⏳ |
 | Phase 6: Additional Features | 4 | 0 | 0 | 4 | 0% ⏳ |
 | Phase 7: Polish & Launch | 3 | 0 | 0 | 3 | 0% ⏳ |
-| **TOTAL** | **22** | **9** | **0** | **13** | **41%** |
+| **TOTAL** | **22** | **10** | **0** | **12** | **45%** |
 
 ### By Category
 
-**✅ Complete:** 9 tasks (41%)
+**✅ Complete:** 10 tasks (45%)
 - Database Schema Design
 - Update Shopify Scopes
 - Install Required Dependencies
@@ -563,27 +590,28 @@
 - Build Schedule Configuration UI
 - Build Email Recipients UI
 - Create Report List View
+- Implement Report CRUD API Routes
 
 **🔄 In Progress:** 0 tasks (0%)
 
-**⏳ Not Started:** 13 tasks (59%)
+**⏳ Not Started:** 12 tasks (55%)
 - All remaining tasks
 
 ---
 
 ## Next Immediate Steps
 
-1. **Start Task 10:** Implement Report CRUD API Routes
-2. **Start Task 11:** Build Shopify Analytics Data Fetcher
-3. **Start Task 12:** Implement Report Data Processor
-4. **Start Task 13:** Build Email Service
+1. **Start Task 11:** Build Shopify Analytics Data Fetcher
+2. **Start Task 12:** Implement Report Data Processor
+3. **Start Task 13:** Build Email Service
+4. **Start Task 14:** Create Report Execution Service
 
 ---
 
 ## Timeline Estimate
 
-**Completed:** ~9 days (Tasks 1-9)
-**Remaining:** ~13-18 days (Tasks 10-22)
+**Completed:** ~10 days (Tasks 1-10)
+**Remaining:** ~12-17 days (Tasks 11-22)
 **Total Estimated:** ~22-27 days
 
 ---

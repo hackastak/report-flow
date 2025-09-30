@@ -10,15 +10,37 @@ import { useLoaderData, Link, useNavigate } from "react-router";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { REPORT_TYPES } from "../config/reportTypes";
+import { prisma } from "../db.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
 
-  // TODO: Fetch scheduled reports from database
-  // For now, return mock data structure
-  const scheduledReports = [
-    // Mock data will be replaced with actual database queries
-  ];
+  // Fetch scheduled reports from database
+  const reports = await prisma.reportSchedule.findMany({
+    where: {
+      shop: session.shop,
+    },
+    include: {
+      recipients: true,
+      filters: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  // Transform data for UI
+  const scheduledReports = reports.map((report) => ({
+    id: report.id,
+    name: report.name,
+    description: report.description,
+    reportType: report.reportType,
+    frequency: report.frequency,
+    isActive: report.isActive,
+    lastRunAt: report.lastRunAt?.toISOString() || null,
+    nextRunAt: report.nextRunAt?.toISOString() || null,
+    recipientCount: report.recipients.length,
+  }));
 
   return {
     scheduledReports,
@@ -78,15 +100,21 @@ export default function ScheduledReports() {
     setDeletingId(reportId);
 
     try {
-      // TODO: Call delete API
-      console.log("Delete report:", reportId);
-      // await fetch(`/api/reports/${reportId}`, { method: "DELETE" });
-      // Refresh the page
-      // window.location.reload();
+      const response = await fetch(`/api/reports/${reportId}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Refresh the page to show updated list
+        window.location.reload();
+      } else {
+        throw new Error(data.error?.message || "Failed to delete report");
+      }
     } catch (error) {
       console.error("Failed to delete report:", error);
       alert("Failed to delete report. Please try again.");
-    } finally {
       setDeletingId(null);
     }
   };
@@ -97,10 +125,17 @@ export default function ScheduledReports() {
     }
 
     try {
-      // TODO: Call run now API
-      console.log("Run report now:", reportId);
-      // await fetch(`/api/reports/${reportId}/run`, { method: "POST" });
-      alert("Report execution started! You will receive an email when it's complete.");
+      const response = await fetch(`/api/reports/${reportId}/run`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert("Report execution started! You will receive an email when it's complete.");
+      } else {
+        throw new Error(data.error?.message || "Failed to run report");
+      }
     } catch (error) {
       console.error("Failed to run report:", error);
       alert("Failed to run report. Please try again.");

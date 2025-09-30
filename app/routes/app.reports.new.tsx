@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { LoaderFunctionArgs, HeadersFunction } from "react-router";
-import { useLoaderData, useSearchParams, Link } from "react-router";
+import { useLoaderData, useSearchParams, Link, useNavigate } from "react-router";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { getReportTypeConfig, isValidReportType } from "../config/reportTypes";
@@ -33,6 +33,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function NewReport() {
   const { reportConfig } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // Form state
   const [reportName, setReportName] = useState("");
@@ -45,6 +46,7 @@ export default function NewReport() {
   });
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
 
   const handleFilterChange = (filters: Record<string, any>) => {
     setFilterValues(filters);
@@ -66,7 +68,7 @@ export default function NewReport() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validation
     const newErrors: Record<string, string> = {};
 
@@ -87,18 +89,40 @@ export default function NewReport() {
       return;
     }
 
-    // TODO: Save report configuration
-    console.log("Saving report:", {
-      name: reportName,
-      description: reportDescription,
-      type: reportConfig.type,
-      filters: filterValues,
-      schedule: scheduleConfig,
-      recipients: recipients,
-    });
+    setSaving(true);
 
-    // TODO: Show success message and redirect
-    alert("Report configuration saved! (This will be replaced with proper save functionality)");
+    try {
+      // Save report configuration
+      const response = await fetch("/api/reports", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: reportName,
+          description: reportDescription,
+          reportType: reportConfig.type,
+          filters: filterValues,
+          schedule: scheduleConfig,
+          recipients: recipients,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Show success message and redirect
+        alert(`Report "${reportName}" created successfully! Next run: ${new Date(data.nextRunAt).toLocaleString()}`);
+        navigate("/app/reports/scheduled");
+      } else {
+        throw new Error(data.error?.message || "Failed to create report");
+      }
+    } catch (error) {
+      console.error("Failed to save report:", error);
+      alert("Failed to save report. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -222,8 +246,8 @@ export default function NewReport() {
           <Link to="/app/reports">
             <s-button variant="secondary">Cancel</s-button>
           </Link>
-          <s-button variant="primary" onClick={handleSave}>
-            Save Report Schedule
+          <s-button variant="primary" onClick={handleSave} disabled={saving}>
+            {saving ? "Saving..." : "Save Report Schedule"}
           </s-button>
         </s-stack>
       </s-section>
