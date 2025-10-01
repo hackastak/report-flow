@@ -14,10 +14,11 @@
 import { prisma } from "../db.server";
 import { fetchShopifyData } from "./shopifyDataFetcher.server";
 import { processReportData } from "./reportDataProcessor.server";
-import { sendReportEmail } from "./emailService.server";
+import { sendReportEmail, sendErrorNotification } from "./emailService.server";
 import { calculateNextRunTime } from "../utils/timezoneHelper";
 import type { ReportType } from "../config/reportTypes";
 import { getReportTypeConfig } from "../config/reportTypes";
+import { categorizeError } from "../utils/errorCategorization";
 import * as fs from "fs";
 
 export interface ExecuteReportOptions {
@@ -44,12 +45,13 @@ export async function executeReport(
 
   let historyId: string | null = null;
   let filePath: string | null = null;
+  let reportSchedule: any = null; // Store for error notification
 
   try {
     // Step 1: Fetch report configuration
     console.log(`[Report Execution] Starting report ${reportScheduleId}`);
-    
-    const reportSchedule = await prisma.reportSchedule.findUnique({
+
+    reportSchedule = await prisma.reportSchedule.findUnique({
       where: { id: reportScheduleId },
       include: {
         filters: true,
@@ -226,6 +228,33 @@ export async function executeReport(
       } catch (cleanupError) {
         console.error(`[Report Execution] Failed to clean up file: ${cleanupError}`);
       }
+    }
+
+    // Send error notification to recipients
+    if (reportSchedule && reportSchedule.recipients && reportSchedule.recipients.length > 0) {
+      try {
+        const errorAnalysis = categorizeError(errorMessage, errorDetails);
+
+        console.log(`[Report Execution] Sending error notification to ${reportSchedule.recipients.length} recipients`);
+
+        await sendErrorNotification({
+          recipients: reportSchedule.recipients,
+          reportName: reportSchedule.name,
+          reportType: reportSchedule.reportType,
+          errorMessage,
+          errorCategory: errorAnalysis.category,
+          troubleshootingTips: errorAnalysis.troubleshootingTips,
+          executionId: historyId || "unknown",
+          shopName: shop,
+        });
+
+        console.log(`[Report Execution] Error notification sent successfully`);
+      } catch (notificationError) {
+        console.error(`[Report Execution] Failed to send error notification:`, notificationError);
+        // Don't fail the whole execution if notification fails
+      }
+    } else {
+      console.log(`[Report Execution] Skipping error notification - no recipients configured`);
     }
 
     return {

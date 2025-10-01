@@ -26,6 +26,17 @@ export interface SendEmailResult {
   errors?: string[];
 }
 
+export interface SendErrorNotificationOptions {
+  recipients: Array<{ email: string; name?: string | null }>;
+  reportName: string;
+  reportType: string;
+  errorMessage: string;
+  errorCategory: string;
+  troubleshootingTips: string[];
+  executionId: string;
+  shopName?: string;
+}
+
 /**
  * SMTP Configuration from environment variables
  */
@@ -392,5 +403,303 @@ export async function testEmailConfiguration(): Promise<{ success: boolean; erro
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }
+}
+
+/**
+ * Send error notification email to recipients
+ */
+export async function sendErrorNotification(
+  options: SendErrorNotificationOptions
+): Promise<SendEmailResult> {
+  const {
+    recipients,
+    reportName,
+    reportType,
+    errorMessage,
+    errorCategory,
+    troubleshootingTips,
+    executionId,
+    shopName,
+  } = options;
+
+  let emailsSent = 0;
+  let emailsFailed = 0;
+  const errors: string[] = [];
+
+  // Create transporter
+  const transporter = createTransporter();
+
+  console.log(`[Email Service] Sending error notification for report: ${reportName}`);
+
+  // Send email to each recipient
+  for (const recipient of recipients) {
+    try {
+      const mailOptions = {
+        from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
+        to: recipient.email,
+        subject: `⚠️ Report Failed: ${reportName}`,
+        text: generateErrorNotificationPlainText(options),
+        html: generateErrorNotificationHTML(options),
+      };
+
+      await transporter.sendMail(mailOptions);
+      emailsSent++;
+      console.log(`[Email Service] Error notification sent to: ${recipient.email}`);
+    } catch (error) {
+      emailsFailed++;
+      const errorMsg = `Failed to send error notification to ${recipient.email}: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`;
+      errors.push(errorMsg);
+      console.error(`[Email Service] ${errorMsg}`);
+    }
+  }
+
+  const success = emailsSent > 0;
+
+  console.log(
+    `[Email Service] Error notification complete. Sent: ${emailsSent}, Failed: ${emailsFailed}`
+  );
+
+  return {
+    success,
+    emailsSent,
+    emailsFailed,
+    errors: errors.length > 0 ? errors : undefined,
+  };
+}
+
+/**
+ * Generate HTML email for error notification
+ */
+function generateErrorNotificationHTML(options: SendErrorNotificationOptions): string {
+  const {
+    reportName,
+    reportType,
+    errorMessage,
+    errorCategory,
+    troubleshootingTips,
+    executionId,
+    shopName,
+  } = options;
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Execution Failed</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #e74c3c;
+    }
+    .header h1 {
+      color: #e74c3c;
+      margin: 0;
+      font-size: 24px;
+    }
+    .alert-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+    .content {
+      padding: 20px 0;
+    }
+    .info-box {
+      background-color: #f8f9fa;
+      border-left: 4px solid #e74c3c;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+    .info-box h3 {
+      margin-top: 0;
+      color: #e74c3c;
+      font-size: 16px;
+    }
+    .info-box p {
+      margin: 5px 0;
+      color: #666;
+    }
+    .troubleshooting {
+      background-color: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+    .troubleshooting h3 {
+      margin-top: 0;
+      color: #856404;
+      font-size: 16px;
+    }
+    .troubleshooting ul {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+    .troubleshooting li {
+      margin: 8px 0;
+      color: #856404;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #007bff;
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 4px;
+      margin: 20px 0;
+      font-weight: 500;
+    }
+    .footer {
+      text-align: center;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+      color: #666;
+      font-size: 12px;
+    }
+    .details {
+      font-size: 14px;
+      color: #666;
+    }
+    .details strong {
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="alert-icon">⚠️</div>
+      <h1>Report Execution Failed</h1>
+    </div>
+
+    <div class="content">
+      <p>Hello,</p>
+
+      <p>We're writing to inform you that your scheduled report <strong>"${reportName}"</strong> failed to execute.</p>
+
+      <div class="info-box">
+        <h3>Error Details</h3>
+        <p class="details"><strong>Report Name:</strong> ${reportName}</p>
+        <p class="details"><strong>Report Type:</strong> ${reportType}</p>
+        <p class="details"><strong>Error Category:</strong> ${errorCategory}</p>
+        <p class="details"><strong>Error Message:</strong> ${errorMessage}</p>
+        <p class="details"><strong>Execution ID:</strong> ${executionId}</p>
+        ${shopName ? `<p class="details"><strong>Shop:</strong> ${shopName}</p>` : ""}
+      </div>
+
+      ${
+        troubleshootingTips.length > 0
+          ? `
+      <div class="troubleshooting">
+        <h3>💡 Troubleshooting Tips</h3>
+        <ul>
+          ${troubleshootingTips.map((tip) => `<li>${tip}</li>`).join("")}
+        </ul>
+      </div>
+      `
+          : ""
+      }
+
+      <p><strong>What happens next?</strong></p>
+      <ul>
+        <li>The report will automatically retry on its next scheduled run</li>
+        <li>You can manually run the report from the dashboard to test</li>
+        <li>Check the report history for more details</li>
+      </ul>
+
+      <div style="text-align: center;">
+        <a href="${process.env.SHOPIFY_APP_URL || ""}/app/reports/scheduled" class="button">
+          View Report Dashboard
+        </a>
+      </div>
+
+      <p>If this issue persists, please contact support or review your report configuration.</p>
+    </div>
+
+    <div class="footer">
+      <p>This is an automated notification from Report Flow.</p>
+      <p>© ${new Date().getFullYear()} Report Flow. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+
+/**
+ * Generate plain text email for error notification
+ */
+function generateErrorNotificationPlainText(options: SendErrorNotificationOptions): string {
+  const {
+    reportName,
+    reportType,
+    errorMessage,
+    errorCategory,
+    troubleshootingTips,
+    executionId,
+    shopName,
+  } = options;
+
+  return `
+⚠️ REPORT EXECUTION FAILED
+
+Hello,
+
+We're writing to inform you that your scheduled report "${reportName}" failed to execute.
+
+ERROR DETAILS
+─────────────────────────────────────────
+Report Name: ${reportName}
+Report Type: ${reportType}
+Error Category: ${errorCategory}
+Error Message: ${errorMessage}
+Execution ID: ${executionId}
+${shopName ? `Shop: ${shopName}` : ""}
+
+${
+  troubleshootingTips.length > 0
+    ? `
+TROUBLESHOOTING TIPS
+─────────────────────────────────────────
+${troubleshootingTips.map((tip, index) => `${index + 1}. ${tip}`).join("\n")}
+`
+    : ""
+}
+
+WHAT HAPPENS NEXT?
+─────────────────────────────────────────
+• The report will automatically retry on its next scheduled run
+• You can manually run the report from the dashboard to test
+• Check the report history for more details
+
+View your report dashboard:
+${process.env.SHOPIFY_APP_URL || ""}/app/reports/scheduled
+
+If this issue persists, please contact support or review your report configuration.
+
+---
+This is an automated notification from Report Flow.
+© ${new Date().getFullYear()} Report Flow. All rights reserved.
+  `.trim();
 }
 
