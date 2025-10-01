@@ -2,16 +2,50 @@ import type {
   HeadersFunction,
   LoaderFunctionArgs,
 } from "react-router";
+import { useLoaderData } from "react-router";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
+import { prisma } from "../db.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
 
-  return null;
+  // Fetch statistics
+  const totalReports = await prisma.reportSchedule.count({
+    where: { shop: session.shop },
+  });
+
+  const activeReports = await prisma.reportSchedule.count({
+    where: { shop: session.shop, isActive: true },
+  });
+
+  const totalExecutions = await prisma.reportHistory.count({
+    where: { reportSchedule: { shop: session.shop } },
+  });
+
+  const recentExecutions = await prisma.reportHistory.findMany({
+    where: { reportSchedule: { shop: session.shop } },
+    orderBy: { startedAt: "desc" },
+    take: 5,
+    include: {
+      reportSchedule: {
+        select: { name: true, reportType: true },
+      },
+    },
+  });
+
+  return {
+    stats: {
+      totalReports,
+      activeReports,
+      totalExecutions,
+    },
+    recentExecutions,
+  };
 };
 
 export default function Index() {
+  const { stats, recentExecutions } = useLoaderData<typeof loader>();
 
   return (
     <s-page heading="Report Flow">
@@ -26,6 +60,84 @@ export default function Index() {
           exports!
         </s-paragraph>
       </s-section>
+
+      {/* Statistics Section */}
+      <s-section heading="Your Reports">
+        <s-stack direction="inline" gap="base">
+          <s-box
+            padding="base"
+            borderWidth="base"
+            borderRadius="base"
+            background="surface"
+            style={{ flex: 1 }}
+          >
+            <s-stack direction="block" gap="tight" alignment="center">
+              <s-text variant="subdued">Total Reports</s-text>
+              <s-heading level={2}>{stats.totalReports}</s-heading>
+            </s-stack>
+          </s-box>
+
+          <s-box
+            padding="base"
+            borderWidth="base"
+            borderRadius="base"
+            background="surface"
+            style={{ flex: 1 }}
+          >
+            <s-stack direction="block" gap="tight" alignment="center">
+              <s-text variant="subdued">Active Reports</s-text>
+              <s-heading level={2}>{stats.activeReports}</s-heading>
+            </s-stack>
+          </s-box>
+
+          <s-box
+            padding="base"
+            borderWidth="base"
+            borderRadius="base"
+            background="surface"
+            style={{ flex: 1 }}
+          >
+            <s-stack direction="block" gap="tight" alignment="center">
+              <s-text variant="subdued">Total Executions</s-text>
+              <s-heading level={2}>{stats.totalExecutions}</s-heading>
+            </s-stack>
+          </s-box>
+        </s-stack>
+      </s-section>
+
+      {/* Recent Executions */}
+      {recentExecutions.length > 0 && (
+        <s-section heading="Recent Executions">
+          <s-stack direction="block" gap="base">
+            {recentExecutions.map((execution) => (
+              <s-box
+                key={execution.id}
+                padding="base"
+                borderWidth="base"
+                borderRadius="base"
+                background="surface"
+              >
+                <s-stack direction="inline" gap="base" alignment="space-between">
+                  <s-stack direction="block" gap="tight">
+                    <s-text weight="bold">{execution.reportSchedule.name}</s-text>
+                    <s-text variant="subdued">
+                      {execution.reportSchedule.reportType} • {new Date(execution.startedAt).toLocaleString()}
+                    </s-text>
+                  </s-stack>
+                  <s-badge variant={execution.status === "SUCCESS" ? "success" : execution.status === "FAILED" ? "critical" : "info"}>
+                    {execution.status}
+                  </s-badge>
+                </s-stack>
+              </s-box>
+            ))}
+          </s-stack>
+          <div style={{ marginTop: "1rem" }}>
+            <s-link href="/app/reports/scheduled">
+              <s-button variant="secondary">View All Reports</s-button>
+            </s-link>
+          </div>
+        </s-section>
+      )}
 
       <s-section heading="Quick Start">
         <s-stack direction="block" gap="base">
