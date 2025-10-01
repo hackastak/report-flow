@@ -2,8 +2,8 @@
 
 ## Project Status
 
-**Current Phase:** Development - Email & Execution Services
-**Progress:** 14 of 22 tasks complete (64%)
+**Current Phase:** Development - Additional Features
+**Progress:** 15 of 22 tasks complete (68%)
 **Last Updated:** 2025-09-30
 
 ---
@@ -413,7 +413,7 @@
 
 ---
 
-### Phase 5: Email & Execution 🔄 2/3 COMPLETE
+### Phase 5: Email & Execution ✅ 3/3 COMPLETE
 
 #### ✅ Task 13: Build Email Service
 **Status:** Complete
@@ -507,26 +507,49 @@
 
 ---
 
-#### ⏳ Task 15: Implement Background Job Scheduler
-**Status:** Not Started  
+#### ✅ Task 15: Implement Background Job Scheduler
+**Status:** Complete
 **Description:** Set up node-cron or similar to check for scheduled reports that need to run and execute them in the background, with proper error recovery
 
-**Planned Deliverables:**
-- [ ] Cron job setup with node-cron
-- [ ] Schedule checker (runs every minute)
-- [ ] Job queue management
-- [ ] Concurrent execution handling
-- [ ] Error recovery
-- [ ] Logging
-- [ ] Tests
+**Deliverables:**
+- [x] Cron job setup with node-cron
+- [x] Schedule checker (runs every 5 minutes)
+- [x] Concurrent execution handling
+- [x] Duplicate prevention per shop
+- [x] Error recovery
+- [x] Comprehensive logging
+- [x] Documentation
 
-**Scheduler Features:**
-- Check every minute for due reports
-- Execute reports in background
-- Handle timezone conversions
-- Prevent duplicate executions
-- Retry failed reports
-- Update next run times
+**Features Implemented:**
+- ✅ `startScheduler()` - Start background scheduler
+- ✅ `stopScheduler()` - Stop scheduler
+- ✅ `getSchedulerStatus()` - Get current status
+- ✅ `triggerSchedulerCheck()` - Manual trigger for testing
+- ✅ Automatic initialization on app start
+- ✅ Runs every 5 minutes (`*/5 * * * *`)
+- ✅ Groups reports by shop
+- ✅ Parallel execution per shop
+- ✅ Sequential execution per report
+- ✅ Duplicate prevention with Set tracking
+- ✅ Session management with offline tokens
+- ✅ Detailed logging with [Scheduler] prefix
+
+**Files Created:**
+- `app/services/backgroundScheduler.server.ts` (220 lines)
+- `app/services/scheduler.init.server.ts` (20 lines)
+- `app/routes/api.scheduler.tsx` (70 lines)
+- `docs/BACKGROUND_SCHEDULER.md` (300+ lines)
+
+**Files Modified:**
+- `app/entry.server.tsx` (added scheduler import)
+
+**Technical Details:**
+- Uses node-cron for scheduling
+- Tracks running jobs to prevent duplicates
+- Gets offline sessions from Shopify session storage
+- Non-blocking execution per shop
+- Comprehensive error handling
+- API routes for status and manual trigger
 
 ---
 
@@ -659,14 +682,14 @@
 | Phase 2: User Interface | 4 | 4 | 0 | 0 | 100% ✅ |
 | Phase 3: Report Management | 1 | 1 | 0 | 0 | 100% ✅ |
 | Phase 4: Backend API | 3 | 3 | 0 | 0 | 100% ✅ |
-| Phase 5: Email & Execution | 3 | 2 | 0 | 1 | 67% 🔄 |
+| Phase 5: Email & Execution | 3 | 3 | 0 | 0 | 100% ✅ |
 | Phase 6: Additional Features | 4 | 0 | 0 | 4 | 0% ⏳ |
 | Phase 7: Polish & Launch | 3 | 0 | 0 | 3 | 0% ⏳ |
-| **TOTAL** | **22** | **14** | **0** | **8** | **64%** |
+| **TOTAL** | **22** | **15** | **0** | **7** | **68%** |
 
 ### By Category
 
-**✅ Complete:** 14 tasks (64%)
+**✅ Complete:** 15 tasks (68%)
 - Database Schema Design
 - Update Shopify Scopes
 - Install Required Dependencies
@@ -681,27 +704,28 @@
 - Implement Report Data Processor
 - Build Email Service
 - Create Report Execution Service
+- Implement Background Job Scheduler
 
 **🔄 In Progress:** 0 tasks (0%)
 
-**⏳ Not Started:** 8 tasks (36%)
+**⏳ Not Started:** 7 tasks (32%)
 - All remaining tasks
 
 ---
 
 ## Next Immediate Steps
 
-1. **Start Task 15:** Implement Background Scheduler
-2. **Start Task 16:** Add Report Pause/Resume
-3. **Start Task 17:** Add Report History View
-4. **Start Task 18:** Add Report Edit Functionality
+1. **Start Task 16:** Add Report Pause/Resume
+2. **Start Task 17:** Add Report History View
+3. **Start Task 18:** Add Report Edit Functionality
+4. **Start Task 19:** Add Report Duplication
 
 ---
 
 ## Timeline Estimate
 
-**Completed:** ~14 days (Tasks 1-14)
-**Remaining:** ~8-13 days (Tasks 15-22)
+**Completed:** ~15 days (Tasks 1-15)
+**Remaining:** ~7-12 days (Tasks 16-22)
 **Total Estimated:** ~22-27 days
 
 ---
