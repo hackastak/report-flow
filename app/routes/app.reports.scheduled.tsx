@@ -85,6 +85,8 @@ export default function ScheduledReports() {
   const { scheduledReports } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [runningId, setRunningId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const handleEdit = (reportId: string) => {
     // TODO: Navigate to edit page
@@ -119,10 +121,12 @@ export default function ScheduledReports() {
     }
   };
 
-  const handleRunNow = async (reportId: string) => {
-    if (!confirm("Run this report now?")) {
+  const handleRunNow = async (reportId: string, reportName: string) => {
+    if (!confirm(`Run "${reportName}" now?\n\nThe report will be generated and emailed to all recipients.`)) {
       return;
     }
+
+    setRunningId(reportId);
 
     try {
       const response = await fetch(`/api/reports/${reportId}/run`, {
@@ -132,28 +136,56 @@ export default function ScheduledReports() {
       const data = await response.json();
 
       if (data.success) {
-        alert("Report execution started! You will receive an email when it's complete.");
+        // Show success message
+        shopify.toast.show("Report execution started! You will receive an email when it's complete.", {
+          duration: 5000,
+        });
       } else {
         throw new Error(data.error?.message || "Failed to run report");
       }
     } catch (error) {
       console.error("Failed to run report:", error);
-      alert("Failed to run report. Please try again.");
+      shopify.toast.show("Failed to run report. Please try again.", {
+        isError: true,
+      });
+    } finally {
+      setRunningId(null);
     }
   };
 
-  const handleToggleActive = async (reportId: string, currentStatus: boolean) => {
+  const handleToggleActive = async (reportId: string, reportName: string, currentStatus: boolean) => {
+    const action = currentStatus ? "pause" : "resume";
+    if (!confirm(`${action === "pause" ? "Pause" : "Resume"} "${reportName}"?\n\n${action === "pause" ? "The report will not run automatically until resumed." : "The report will resume running on its schedule."}`)) {
+      return;
+    }
+
+    setTogglingId(reportId);
+
     try {
-      // TODO: Call toggle active API
-      console.log("Toggle active:", reportId, !currentStatus);
-      // await fetch(`/api/reports/${reportId}`, {
-      //   method: "PATCH",
-      //   body: JSON.stringify({ isActive: !currentStatus }),
-      // });
-      // window.location.reload();
+      const response = await fetch(`/api/reports/${reportId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isActive: !currentStatus }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        shopify.toast.show(`Report ${action === "pause" ? "paused" : "resumed"} successfully!`);
+        // Refresh the page to show updated status
+        window.location.reload();
+      } else {
+        throw new Error(data.error?.message || "Failed to update report status");
+      }
     } catch (error) {
       console.error("Failed to toggle report status:", error);
-      alert("Failed to update report status. Please try again.");
+      shopify.toast.show("Failed to update report status. Please try again.", {
+        isError: true,
+      });
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -261,23 +293,35 @@ export default function ScheduledReports() {
                       )}
                     </td>
                     <td style={{ padding: "0.75rem" }}>
-                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
                         <s-button
                           variant="tertiary"
                           onClick={() => handleEdit(report.id)}
+                          disabled={runningId === report.id || deletingId === report.id || togglingId === report.id}
                         >
                           Edit
                         </s-button>
                         <s-button
-                          variant="tertiary"
-                          onClick={() => handleRunNow(report.id)}
+                          variant="primary"
+                          onClick={() => handleRunNow(report.id, report.name)}
+                          disabled={runningId === report.id || deletingId === report.id || togglingId === report.id || !report.isActive}
+                          loading={runningId === report.id}
                         >
-                          Run Now
+                          {runningId === report.id ? "Running..." : "Run Now"}
+                        </s-button>
+                        <s-button
+                          variant="tertiary"
+                          onClick={() => handleToggleActive(report.id, report.name, report.isActive)}
+                          disabled={runningId === report.id || deletingId === report.id || togglingId === report.id}
+                          loading={togglingId === report.id}
+                        >
+                          {togglingId === report.id ? "Updating..." : (report.isActive ? "Pause" : "Resume")}
                         </s-button>
                         <s-button
                           variant="tertiary"
                           onClick={() => handleDelete(report.id)}
-                          disabled={deletingId === report.id}
+                          disabled={deletingId === report.id || runningId === report.id || togglingId === report.id}
+                          loading={deletingId === report.id}
                         >
                           {deletingId === report.id ? "Deleting..." : "Delete"}
                         </s-button>
