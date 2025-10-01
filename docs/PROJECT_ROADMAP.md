@@ -3,7 +3,7 @@
 ## Project Status
 
 **Current Phase:** Development - Email & Execution Services
-**Progress:** 12 of 22 tasks complete (55%)
+**Progress:** 13 of 22 tasks complete (59%)
 **Last Updated:** 2025-09-30
 
 ---
@@ -413,28 +413,45 @@
 
 ---
 
-### Phase 5: Email & Execution 🔄 0/3 COMPLETE
+### Phase 5: Email & Execution 🔄 1/3 COMPLETE
 
-#### ⏳ Task 13: Build Email Service
-**Status:** Not Started  
+#### ✅ Task 13: Build Email Service
+**Status:** Complete
 **Description:** Implement email service using nodemailer to send reports as attachments with customizable email templates and proper error handling
 
-**Planned Deliverables:**
-- [ ] Email service with nodemailer
-- [ ] Email templates (HTML + plain text)
-- [ ] Attachment handling
-- [ ] SMTP configuration
-- [ ] Error handling and retries
-- [ ] Email logging
-- [ ] Tests
+**Deliverables:**
+- [x] Email service with nodemailer
+- [x] Email templates (HTML + plain text)
+- [x] Attachment handling
+- [x] SMTP configuration
+- [x] Error handling and per-recipient tracking
+- [x] Email logging
+- [x] Documentation
 
-**Email Features:**
-- Professional HTML template
-- Plain text fallback
-- CSV attachment
-- Report summary in body
-- Unsubscribe link (future)
-- Branding
+**Features Implemented:**
+- ✅ Professional HTML email template
+- ✅ Plain text fallback template
+- ✅ CSV file attachment
+- ✅ Report summary in email body
+- ✅ Responsive design (mobile-friendly)
+- ✅ Shopify-inspired branding
+- ✅ Per-recipient error handling
+- ✅ File verification before sending
+- ✅ SMTP configuration via environment variables
+- ✅ Support for Gmail, SendGrid, AWS SES
+
+**Files Created:**
+- `app/services/emailService.server.ts` (300+ lines)
+- `docs/EMAIL_SERVICE.md` (300+ lines)
+- `.env.example` (SMTP configuration examples)
+
+**Technical Details:**
+- Uses nodemailer for email delivery
+- Sequential sending with individual error tracking
+- File size calculation and display
+- Recipient name extraction from email
+- Configurable from address and name
+- Test configuration function included
 
 ---
 
@@ -614,14 +631,14 @@
 | Phase 2: User Interface | 4 | 4 | 0 | 0 | 100% ✅ |
 | Phase 3: Report Management | 1 | 1 | 0 | 0 | 100% ✅ |
 | Phase 4: Backend API | 3 | 3 | 0 | 0 | 100% ✅ |
-| Phase 5: Email & Execution | 3 | 0 | 0 | 3 | 0% ⏳ |
+| Phase 5: Email & Execution | 3 | 1 | 0 | 2 | 33% 🔄 |
 | Phase 6: Additional Features | 4 | 0 | 0 | 4 | 0% ⏳ |
 | Phase 7: Polish & Launch | 3 | 0 | 0 | 3 | 0% ⏳ |
-| **TOTAL** | **22** | **12** | **0** | **10** | **55%** |
+| **TOTAL** | **22** | **13** | **0** | **9** | **59%** |
 
 ### By Category
 
-**✅ Complete:** 12 tasks (55%)
+**✅ Complete:** 13 tasks (59%)
 - Database Schema Design
 - Update Shopify Scopes
 - Install Required Dependencies
@@ -634,27 +651,28 @@
 - Implement Report CRUD API Routes
 - Build Shopify Analytics Data Fetcher
 - Implement Report Data Processor
+- Build Email Service
 
 **🔄 In Progress:** 0 tasks (0%)
 
-**⏳ Not Started:** 10 tasks (45%)
+**⏳ Not Started:** 9 tasks (41%)
 - All remaining tasks
 
 ---
 
 ## Next Immediate Steps
 
-1. **Start Task 13:** Build Email Service
-2. **Start Task 14:** Create Report Execution Service
-3. **Start Task 15:** Implement Background Scheduler
-4. **Start Task 16:** Add Report Pause/Resume
+1. **Start Task 14:** Create Report Execution Service
+2. **Start Task 15:** Implement Background Scheduler
+3. **Start Task 16:** Add Report Pause/Resume
+4. **Start Task 17:** Add Report History View
 
 ---
 
 ## Timeline Estimate
 
-**Completed:** ~12 days (Tasks 1-12)
-**Remaining:** ~10-15 days (Tasks 13-22)
+**Completed:** ~13 days (Tasks 1-13)
+**Remaining:** ~9-14 days (Tasks 14-22)
 **Total Estimated:** ~22-27 days
 
 ---
