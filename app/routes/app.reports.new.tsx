@@ -48,6 +48,11 @@ export default function NewReport() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
+  // Preview state
+  const [previewData, setPreviewData] = useState<any>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+
   const handleFilterChange = (filters: Record<string, any>) => {
     setFilterValues(filters);
   };
@@ -65,6 +70,38 @@ export default function NewReport() {
         delete newErrors.recipients;
         return newErrors;
       });
+    }
+  };
+
+  const handlePreview = async () => {
+    setLoadingPreview(true);
+    setPreviewError(null);
+    setPreviewData(null);
+
+    try {
+      const response = await fetch("/api/reports/preview", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reportType: searchParams.get("type"),
+          filters: filterValues,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setPreviewData(data.preview);
+      } else {
+        setPreviewError(data.error?.message || "Failed to generate preview");
+      }
+    } catch (error) {
+      console.error("Preview error:", error);
+      setPreviewError("Failed to generate preview. Please try again.");
+    } finally {
+      setLoadingPreview(false);
     }
   };
 
@@ -208,6 +245,91 @@ export default function NewReport() {
             onChange={handleFilterChange}
           />
         </div>
+      </s-section>
+
+      {/* Preview Section */}
+      <s-section heading="Preview Report Data">
+        <s-paragraph>
+          Preview a sample of your report data to verify your filters are working correctly.
+        </s-paragraph>
+        <div style={{ marginTop: "1rem" }}>
+          <s-button
+            variant="secondary"
+            onClick={handlePreview}
+            disabled={loadingPreview}
+            loading={loadingPreview}
+          >
+            {loadingPreview ? "Loading Preview..." : "Preview Report"}
+          </s-button>
+        </div>
+
+        {/* Preview Error */}
+        {previewError && (
+          <div style={{ marginTop: "1rem" }}>
+            <s-banner variant="critical">
+              <s-paragraph>{previewError}</s-paragraph>
+            </s-banner>
+          </div>
+        )}
+
+        {/* Preview Data */}
+        {previewData && (
+          <div style={{ marginTop: "1rem" }}>
+            <s-banner variant="success">
+              <s-paragraph>
+                Showing {previewData.previewRecords} of {previewData.totalRecords} records
+              </s-paragraph>
+            </s-banner>
+
+            <div style={{ marginTop: "1rem", overflowX: "auto" }}>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: "0.875rem",
+                }}
+              >
+                <thead>
+                  <tr
+                    style={{
+                      borderBottom: "2px solid var(--s-color-border)",
+                      textAlign: "left",
+                    }}
+                  >
+                    {previewData.columns.map((column: any) => (
+                      <th
+                        key={column.key}
+                        style={{ padding: "0.75rem", fontWeight: 600 }}
+                      >
+                        <s-text weight="bold">{column.label}</s-text>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {previewData.data.map((row: any, index: number) => (
+                    <tr
+                      key={index}
+                      style={{
+                        borderBottom: "1px solid var(--s-color-border)",
+                      }}
+                    >
+                      {previewData.columns.map((column: any) => (
+                        <td key={column.key} style={{ padding: "0.75rem" }}>
+                          <s-text>
+                            {row[column.key] !== null && row[column.key] !== undefined
+                              ? String(row[column.key])
+                              : "—"}
+                          </s-text>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </s-section>
 
       {/* Schedule Configuration */}
