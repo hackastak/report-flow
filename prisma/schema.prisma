@@ -118,3 +118,15 @@ model ReportHistory {
   @@index([status])
   @@index([startedAt])
 }
+
+// User preferences for onboarding and settings
+model UserPreferences {
+  id                    String   @id @default(cuid())
+  shop                  String   @unique
+  hasSeenOnboarding     Boolean  @default(false)
+  onboardingDismissedAt DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([shop])
+}

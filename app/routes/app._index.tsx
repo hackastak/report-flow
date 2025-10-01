@@ -2,10 +2,12 @@ import type {
   HeadersFunction,
   LoaderFunctionArgs,
 } from "react-router";
-import { useLoaderData } from "react-router";
+import { useLoaderData, useNavigate } from "react-router";
+import { useState, useEffect } from "react";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { prisma } from "../db.server";
+import { OnboardingModal } from "../components/OnboardingModal";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
@@ -34,6 +36,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   });
 
+  // Check if user has seen onboarding
+  const userPreferences = await prisma.userPreferences.findUnique({
+    where: { shop: session.shop },
+  });
+
   return {
     stats: {
       totalReports,
@@ -41,17 +48,63 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       totalExecutions,
     },
     recentExecutions,
+    hasSeenOnboarding: userPreferences?.hasSeenOnboarding || false,
   };
 };
 
 export default function Index() {
-  const { stats, recentExecutions } = useLoaderData<typeof loader>();
+  const { stats, recentExecutions, hasSeenOnboarding } = useLoaderData<typeof loader>();
+  const navigate = useNavigate();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    // Show onboarding modal if user hasn't seen it
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, [hasSeenOnboarding]);
+
+  const handleCloseOnboarding = async () => {
+    setShowOnboarding(false);
+
+    // Mark onboarding as seen
+    try {
+      await fetch("/api/onboarding", {
+        method: "POST",
+      });
+    } catch (error) {
+      console.error("Failed to mark onboarding as seen:", error);
+    }
+  };
+
+  const handleGetStarted = async () => {
+    setShowOnboarding(false);
+
+    // Mark onboarding as seen
+    try {
+      await fetch("/api/onboarding", {
+        method: "POST",
+      });
+    } catch (error) {
+      console.error("Failed to mark onboarding as seen:", error);
+    }
+
+    // Navigate to create report page
+    navigate("/app/reports");
+  };
 
   return (
-    <s-page heading="Report Flow">
-      <s-link slot="primary-action" href="/app/reports">
-        <s-button variant="primary">Create Scheduled Report</s-button>
-      </s-link>
+    <>
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={handleCloseOnboarding}
+        onGetStarted={handleGetStarted}
+      />
+
+      <s-page heading="Report Flow">
+        <s-link slot="primary-action" href="/app/reports">
+          <s-button variant="primary">Create Scheduled Report</s-button>
+        </s-link>
 
       <s-section heading="Welcome to Report Flow 📊">
         <s-paragraph>
@@ -279,6 +332,7 @@ export default function Index() {
         </s-unordered-list>
       </s-section>
     </s-page>
+    </>
   );
 }
 
