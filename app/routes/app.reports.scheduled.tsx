@@ -294,6 +294,9 @@ export default function ScheduledReports() {
                     </td>
                     <td style={{ padding: "0.75rem" }}>
                       <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                        <Link to={`/app/reports/${report.id}/history`}>
+                          <s-button variant="tertiary">History</s-button>
+                        </Link>
                         <s-button
                           variant="tertiary"
                           onClick={() => handleEdit(report.id)}

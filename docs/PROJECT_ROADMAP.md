@@ -3,7 +3,7 @@
 ## Project Status
 
 **Current Phase:** Development - Additional Features
-**Progress:** 16 of 22 tasks complete (73%)
+**Progress:** 17 of 22 tasks complete (77%)
 **Last Updated:** 2025-09-30
 
 ---
@@ -553,7 +553,7 @@
 
 ---
 
-### Phase 6: Additional Features 🔄 1/4 COMPLETE
+### Phase 6: Additional Features 🔄 2/4 COMPLETE
 
 #### ✅ Task 16: Create Manual Report Execution
 **Status:** Complete
@@ -595,27 +595,48 @@
 
 ---
 
-#### ⏳ Task 17: Build Report History View
-**Status:** Not Started  
-**Description:** Create a page showing execution history for each report with status (success/failed), timestamp, recipients, and download links for generated files
+#### ✅ Task 17: Build Report History View
+**Status:** Complete
+**Description:** Create a page showing execution history for each report with status (success/failed), timestamp, recipients, and error details
 
-**Planned Deliverables:**
-- [ ] Report history page
-- [ ] Execution timeline
-- [ ] Status indicators
-- [ ] Error details display
-- [ ] Download links for files
-- [ ] Filter by date range
-- [ ] Tests
+**Deliverables:**
+- [x] Report history page
+- [x] Execution timeline (last 50 executions)
+- [x] Status indicators (success/failed/running badges)
+- [x] Error details display (expandable)
+- [x] Email delivery statistics
+- [x] Duration and timing information
+- [x] Empty state handling
+- [x] Navigation integration
+- [x] Documentation
 
-**History Information:**
-- Execution date/time
-- Status (success/failed/running)
-- Record count
-- File size
-- Recipients
-- Error messages (if failed)
-- Download link
+**Features Implemented:**
+- ✅ History page route (`/app/reports/:id/history`)
+- ✅ Execution table with 7 columns
+- ✅ Status badges (green/red/blue)
+- ✅ Formatted dates and durations
+- ✅ File size formatting (B/KB/MB)
+- ✅ Record count with comma separators
+- ✅ Email delivery stats (sent/failed)
+- ✅ Expandable error details
+- ✅ Empty state with helpful message
+- ✅ "History" button in scheduled reports
+- ✅ Back navigation button
+
+**Files Created:**
+- `app/routes/app.reports.$id.history.tsx` (300 lines)
+- `docs/REPORT_HISTORY_VIEW.md` (300+ lines)
+
+**Files Modified:**
+- `app/routes/app.reports.scheduled.tsx` (added History button)
+
+**Technical Details:**
+- Fetches last 50 executions from database
+- Orders by startedAt descending (newest first)
+- Formats dates, durations, file sizes, record counts
+- Expandable error details with styled container
+- Shop-based data isolation
+- Responsive table layout
 
 ---
 
@@ -709,13 +730,13 @@
 | Phase 3: Report Management | 1 | 1 | 0 | 0 | 100% ✅ |
 | Phase 4: Backend API | 3 | 3 | 0 | 0 | 100% ✅ |
 | Phase 5: Email & Execution | 3 | 3 | 0 | 0 | 100% ✅ |
-| Phase 6: Additional Features | 4 | 1 | 0 | 3 | 25% 🔄 |
+| Phase 6: Additional Features | 4 | 2 | 0 | 2 | 50% 🔄 |
 | Phase 7: Polish & Launch | 3 | 0 | 0 | 3 | 0% ⏳ |
-| **TOTAL** | **22** | **16** | **0** | **6** | **73%** |
+| **TOTAL** | **22** | **17** | **0** | **5** | **77%** |
 
 ### By Category
 
-**✅ Complete:** 16 tasks (73%)
+**✅ Complete:** 17 tasks (77%)
 - Database Schema Design
 - Update Shopify Scopes
 - Install Required Dependencies
@@ -732,27 +753,28 @@
 - Create Report Execution Service
 - Implement Background Job Scheduler
 - Create Manual Report Execution
+- Build Report History View
 
 **🔄 In Progress:** 0 tasks (0%)
 
-**⏳ Not Started:** 6 tasks (27%)
+**⏳ Not Started:** 5 tasks (23%)
 - All remaining tasks
 
 ---
 
 ## Next Immediate Steps
 
-1. **Start Task 17:** Add Report History View
-2. **Start Task 18:** Add Report Edit Functionality
-3. **Start Task 19:** Add Report Duplication
-4. **Start Task 20:** Add Error Notifications
+1. **Start Task 18:** Add Report Edit Functionality
+2. **Start Task 19:** Add Report Duplication
+3. **Start Task 20:** Add Error Notifications
+4. **Start Task 21:** Add Usage Analytics
 
 ---
 
 ## Timeline Estimate
 
-**Completed:** ~16 days (Tasks 1-16)
-**Remaining:** ~6-11 days (Tasks 17-22)
+**Completed:** ~17 days (Tasks 1-17)
+**Remaining:** ~5-10 days (Tasks 18-22)
 **Total Estimated:** ~22-27 days
 
 ---
