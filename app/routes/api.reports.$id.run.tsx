@@ -8,6 +8,7 @@ import type { ActionFunctionArgs } from "react-router";
 import { json } from "react-router";
 import { authenticate } from "../shopify.server";
 import { prisma } from "../db.server";
+import { executeReportManually } from "../services/reportExecutionService.server";
 
 // POST /api/reports/:id/run - Run report now
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -66,31 +67,28 @@ export async function action({ request, params }: ActionFunctionArgs) {
       );
     }
 
-    // Create execution history record
-    const execution = await prisma.reportHistory.create({
-      data: {
-        reportScheduleId: report.id,
-        status: "RUNNING",
-        startedAt: new Date(),
-      },
-    });
-
-    // TODO: Trigger report execution service
-    // This will be implemented in Task 14: Create Report Execution Service
-    // For now, we just create the history record
+    // Execute report using the execution service
     console.log("Manual report execution triggered:", {
       reportId: report.id,
-      executionId: execution.id,
       reportType: report.reportType,
       recipientCount: report.recipients.length,
     });
 
-    // In the future, this will call:
-    // await reportExecutionService.execute(report.id, execution.id);
+    // Execute report asynchronously (don't wait for completion)
+    executeReportManually(report.id, session.shop, session.accessToken)
+      .then((result) => {
+        if (result.success) {
+          console.log(`Report execution completed successfully: ${result.historyId}`);
+        } else {
+          console.error(`Report execution failed: ${result.error}`);
+        }
+      })
+      .catch((error) => {
+        console.error("Report execution error:", error);
+      });
 
     return json({
       success: true,
-      executionId: execution.id,
       message: "Report execution started. You will receive an email when it's complete.",
     });
   } catch (error) {
