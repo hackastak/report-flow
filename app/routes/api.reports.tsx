@@ -5,7 +5,6 @@
  */
 
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { json } from "react-router";
 import { authenticate } from "../shopify.server";
 import { prisma } from "../db.server";
 import { isValidReportType } from "../config/reportTypes";
@@ -49,13 +48,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
       filterCount: report.filters.length,
     }));
 
-    return json({
+    return Response.json({
       success: true,
       reports: reportsWithCounts,
     });
   } catch (error) {
     console.error("Failed to fetch reports:", error);
-    return json(
+    return Response.json(
       {
         success: false,
         error: {
@@ -80,7 +79,7 @@ export async function action({ request }: ActionFunctionArgs) {
       // Validation
       const validation = validateReportData(data);
       if (!validation.isValid) {
-        return json(
+        return Response.json(
           {
             success: false,
             error: {
@@ -134,7 +133,7 @@ export async function action({ request }: ActionFunctionArgs) {
         },
       });
 
-      return json({
+      return Response.json({
         success: true,
         reportId: report.id,
         nextRunAt: report.nextRunAt?.toISOString(),
@@ -142,7 +141,7 @@ export async function action({ request }: ActionFunctionArgs) {
       });
     } catch (error) {
       console.error("Failed to create report:", error);
-      return json(
+      return Response.json(
         {
           success: false,
           error: {
@@ -156,7 +155,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }
   }
 
-  return json(
+  return Response.json(
     {
       success: false,
       error: {

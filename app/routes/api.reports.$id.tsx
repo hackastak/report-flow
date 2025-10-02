@@ -5,7 +5,6 @@
  */
 
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { json } from "react-router";
 import { authenticate } from "../shopify.server";
 import { prisma } from "../db.server";
 import { isValidReportType } from "../config/reportTypes";
@@ -17,7 +16,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const { id } = params;
 
   if (!id) {
-    return json(
+    return Response.json(
       {
         success: false,
         error: {
@@ -42,7 +41,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     });
 
     if (!report) {
-      return json(
+      return Response.json(
         {
           success: false,
           error: {
@@ -64,7 +63,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       }
     });
 
-    return json({
+    return Response.json({
       success: true,
       report: {
         id: report.id,
@@ -90,7 +89,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     });
   } catch (error) {
     console.error("Failed to fetch report:", error);
-    return json(
+    return Response.json(
       {
         success: false,
         error: {
@@ -111,7 +110,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const { id } = params;
 
   if (!id) {
-    return json(
+    return Response.json(
       {
         success: false,
         error: {
@@ -135,7 +134,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       });
 
       if (!report) {
-        return json(
+        return Response.json(
           {
             success: false,
             error: {
@@ -154,13 +153,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
         },
       });
 
-      return json({
+      return Response.json({
         success: true,
         message: "Report deleted successfully",
       });
     } catch (error) {
       console.error("Failed to delete report:", error);
-      return json(
+      return Response.json(
         {
           success: false,
           error: {
@@ -188,7 +187,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       });
 
       if (!existingReport) {
-        return json(
+        return Response.json(
           {
             success: false,
             error: {
@@ -203,7 +202,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       // Validation
       const validation = validateReportData(data);
       if (!validation.isValid) {
-        return json(
+        return Response.json(
           {
             success: false,
             error: {
@@ -260,7 +259,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
         },
       });
 
-      return json({
+      return Response.json({
         success: true,
         reportId: report.id,
         nextRunAt: report.nextRunAt?.toISOString(),
@@ -268,7 +267,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       });
     } catch (error) {
       console.error("Failed to update report:", error);
-      return json(
+      return Response.json(
         {
           success: false,
           error: {
@@ -282,7 +281,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }
   }
 
-  return json(
+  return Response.json(
     {
       success: false,
       error: {

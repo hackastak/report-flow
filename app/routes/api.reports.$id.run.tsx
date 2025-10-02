@@ -5,7 +5,6 @@
  */
 
 import type { ActionFunctionArgs } from "react-router";
-import { json } from "react-router";
 import { authenticate } from "../shopify.server";
 import { prisma } from "../db.server";
 import { executeReportManually } from "../services/reportExecutionService.server";
@@ -16,7 +15,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const { id } = params;
 
   if (!id) {
-    return json(
+    return Response.json(
       {
         success: false,
         error: {
@@ -29,7 +28,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   }
 
   if (request.method !== "POST") {
-    return json(
+    return Response.json(
       {
         success: false,
         error: {
@@ -55,7 +54,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     });
 
     if (!report) {
-      return json(
+      return Response.json(
         {
           success: false,
           error: {
@@ -74,6 +73,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
       recipientCount: report.recipients.length,
     });
 
+    // Ensure we have an access token
+    if (!session.accessToken) {
+      return Response.json(
+        {
+          success: false,
+          error: {
+            code: "MISSING_ACCESS_TOKEN",
+            message: "Session access token is missing",
+          },
+        },
+        { status: 500 }
+      );
+    }
+
     // Execute report asynchronously (don't wait for completion)
     executeReportManually(report.id, session.shop, session.accessToken)
       .then((result) => {
@@ -87,13 +100,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
         console.error("Report execution error:", error);
       });
 
-    return json({
+    return Response.json({
       success: true,
       message: "Report execution started. You will receive an email when it's complete.",
     });
   } catch (error) {
     console.error("Failed to run report:", error);
-    return json(
+    return Response.json(
       {
         success: false,
         error: {
