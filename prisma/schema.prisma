@@ -58,6 +58,7 @@ model ReportSchedule {
   // Relations
   filters     ReportFilter[]
   recipients  ReportRecipient[]
+  fields      ReportField[]
   history     ReportHistory[]
 
   @@index([shop])
@@ -89,6 +90,21 @@ model ReportRecipient {
   createdAt        DateTime @default(now())
 
   @@index([reportScheduleId])
+}
+
+model ReportField {
+  id               String   @id @default(uuid())
+  reportScheduleId String
+  reportSchedule   ReportSchedule @relation(fields: [reportScheduleId], references: [id], onDelete: Cascade)
+
+  // Field configuration - stores which fields are selected for this report
+  fieldKey         String   // e.g., "date", "totalSales", "orderCount"
+  fieldOrder       Int      // Order in which field should appear in the report (0-based)
+
+  createdAt        DateTime @default(now())
+
+  @@index([reportScheduleId])
+  @@unique([reportScheduleId, fieldKey])
 }
 
 model ReportHistory {

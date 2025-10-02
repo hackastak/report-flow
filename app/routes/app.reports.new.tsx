@@ -14,6 +14,10 @@ import {
   type Recipient,
   validateRecipients,
 } from "../components/EmailRecipientsForm";
+import {
+  FieldSelectionForm,
+  type SelectedField,
+} from "../components/FieldSelectionForm";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticate.admin(request);
@@ -45,6 +49,7 @@ export default function NewReport() {
     timezone: "UTC",
   });
   const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [selectedFields, setSelectedFields] = useState<SelectedField[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
@@ -68,6 +73,18 @@ export default function NewReport() {
       setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors.recipients;
+        return newErrors;
+      });
+    }
+  };
+
+  const handleFieldsChange = (fields: SelectedField[]) => {
+    setSelectedFields(fields);
+    // Clear fields error if any
+    if (errors.fields) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.fields;
         return newErrors;
       });
     }
@@ -119,6 +136,11 @@ export default function NewReport() {
       newErrors.recipients = recipientValidation.error || "Invalid recipients";
     }
 
+    // Validate fields
+    if (selectedFields.length === 0) {
+      newErrors.fields = "Please select at least one field to include in the report";
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       // Scroll to top to show errors
@@ -142,6 +164,7 @@ export default function NewReport() {
           filters: filterValues,
           schedule: scheduleConfig,
           recipients: recipients,
+          selectedFields: selectedFields,
         }),
       });
 
@@ -328,6 +351,26 @@ export default function NewReport() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+      </s-section>
+
+      {/* Field Selection */}
+      <s-section heading="Select Report Fields">
+        <s-paragraph>
+          Choose which data fields to include in your report. You can customize the columns that will appear in the CSV export.
+        </s-paragraph>
+        <div style={{ marginTop: "1rem" }}>
+          <FieldSelectionForm
+            availableFields={reportConfig.dataFields}
+            onChange={handleFieldsChange}
+          />
+        </div>
+        {errors.fields && (
+          <div style={{ marginTop: "1rem" }}>
+            <s-banner variant="critical">
+              <s-paragraph>{errors.fields}</s-paragraph>
+            </s-banner>
           </div>
         )}
       </s-section>

@@ -17,6 +17,7 @@ export interface ProcessDataOptions {
   rawData: any[];
   filters: Record<string, any>;
   reportName: string;
+  selectedFields?: Array<{ key: string; order: number }>;
 }
 
 export interface ProcessDataResult {
@@ -33,7 +34,7 @@ export interface ProcessDataResult {
 export async function processReportData(
   options: ProcessDataOptions
 ): Promise<ProcessDataResult> {
-  const { reportType, rawData, filters, reportName } = options;
+  const { reportType, rawData, filters, reportName, selectedFields } = options;
 
   try {
     // Get report configuration
@@ -70,10 +71,25 @@ export async function processReportData(
         throw new Error(`Unknown report type: ${reportType}`);
     }
 
+    // Determine which fields to include in the CSV
+    let fieldsToInclude = reportConfig.dataFields;
+
+    if (selectedFields && selectedFields.length > 0) {
+      // Filter and order fields based on user selection
+      const selectedFieldKeys = new Set(selectedFields.map(f => f.key));
+      fieldsToInclude = reportConfig.dataFields
+        .filter(field => selectedFieldKeys.has(field.key))
+        .sort((a, b) => {
+          const orderA = selectedFields.find(f => f.key === a.key)?.order ?? 999;
+          const orderB = selectedFields.find(f => f.key === b.key)?.order ?? 999;
+          return orderA - orderB;
+        });
+    }
+
     // Generate CSV file
     const filePath = await generateCSV(
       processedData,
-      reportConfig.dataFields,
+      fieldsToInclude,
       reportName
     );
 

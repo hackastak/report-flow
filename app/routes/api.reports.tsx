@@ -126,10 +126,17 @@ export async function action({ request }: ActionFunctionArgs) {
               name: recipient.name || null,
             })),
           },
+          fields: {
+            create: (data.selectedFields || []).map((field: any) => ({
+              fieldKey: field.key,
+              fieldOrder: field.order,
+            })),
+          },
         },
         include: {
           recipients: true,
           filters: true,
+          fields: true,
         },
       });
 
@@ -233,6 +240,17 @@ function validateReportData(data: any): { isValid: boolean; error?: string } {
   for (const recipient of data.recipients) {
     if (!recipient.email || !emailRegex.test(recipient.email)) {
       return { isValid: false, error: `Invalid email address: ${recipient.email}` };
+    }
+  }
+
+  // Validate selected fields
+  if (!data.selectedFields || !Array.isArray(data.selectedFields) || data.selectedFields.length === 0) {
+    return { isValid: false, error: "At least one field must be selected" };
+  }
+
+  for (const field of data.selectedFields) {
+    if (!field.key || typeof field.key !== "string") {
+      return { isValid: false, error: "Invalid field configuration" };
     }
   }
 

@@ -89,9 +89,7 @@ export default function ScheduledReports() {
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const handleEdit = (reportId: string) => {
-    // TODO: Navigate to edit page
-    console.log("Edit report:", reportId);
-    // navigate(`/app/reports/edit/${reportId}`);
+    navigate(`/app/reports/edit/${reportId}`);
   };
 
   const handleDelete = async (reportId: string) => {

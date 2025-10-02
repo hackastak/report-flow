@@ -56,6 +56,11 @@ export async function executeReport(
       include: {
         filters: true,
         recipients: true,
+        fields: {
+          orderBy: {
+            fieldOrder: 'asc',
+          },
+        },
       },
     });
 
@@ -103,12 +108,19 @@ export async function executeReport(
 
     // Step 3: Process and format data
     console.log(`[Report Execution] Processing data...`);
-    
+
+    // Convert fields array to the format expected by processReportData
+    const selectedFields = reportSchedule.fields?.map((field: any) => ({
+      key: field.fieldKey,
+      order: field.fieldOrder,
+    }));
+
     const processResult = await processReportData({
       reportType: reportSchedule.reportType as ReportType,
       rawData: fetchResult.data,
       filters: filtersObj,
       reportName: reportSchedule.name,
+      selectedFields: selectedFields,
     });
 
     if (!processResult.success) {
