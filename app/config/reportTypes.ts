@@ -5,14 +5,15 @@
  * and metadata for the Report Flow app.
  */
 
-export type ReportType = 
+export type ReportType =
   | "SALES"
   | "ORDERS"
   | "PRODUCTS"
   | "CUSTOMERS"
   | "INVENTORY"
   | "TRAFFIC"
-  | "DISCOUNTS";
+  | "DISCOUNTS"
+  | "FINANCE_SUMMARY";
 
 export type FilterType =
   | "DATE_RANGE"
@@ -463,6 +464,62 @@ export const REPORT_TYPES: Record<ReportType, ReportTypeConfig> = {
     defaultFilters: {
       dateRange: "LAST_30_DAYS",
       status: "ALL",
+    },
+  },
+
+  FINANCE_SUMMARY: {
+    type: "FINANCE_SUMMARY",
+    name: "Finance Summary",
+    description: "Comprehensive financial report with sales breakdown, gross profit, payments, and gift cards",
+    icon: "💵",
+    category: "sales",
+    filters: [
+      {
+        key: "dateRange",
+        label: "Date Range",
+        type: "select",
+        options: DATE_RANGE_OPTIONS,
+        required: true,
+        defaultValue: "LAST_30_DAYS",
+      },
+      {
+        key: "salesChannel",
+        label: "Sales Channel",
+        type: "multiselect",
+        options: [
+          { value: "online_store", label: "Online Store" },
+          { value: "pos", label: "Point of Sale" },
+          { value: "mobile", label: "Mobile" },
+          { value: "facebook", label: "Facebook" },
+          { value: "instagram", label: "Instagram" },
+        ],
+      },
+    ],
+    dataFields: [
+      { key: "date", label: "Date", type: "date" },
+      // Total sales breakdown
+      { key: "grossSales", label: "Gross Sales", type: "currency" },
+      { key: "discounts", label: "Discounts", type: "currency" },
+      { key: "returns", label: "Returns", type: "currency" },
+      { key: "netSales", label: "Net Sales", type: "currency" },
+      { key: "shippingCharges", label: "Shipping Charges", type: "currency" },
+      { key: "returnFees", label: "Return Fees", type: "currency" },
+      { key: "taxes", label: "Taxes", type: "currency" },
+      { key: "totalSales", label: "Total Sales", type: "currency" },
+      // Gross profit breakdown
+      { key: "netSalesWithoutCost", label: "Net Sales Without Cost Recorded", type: "currency" },
+      { key: "netSalesWithCost", label: "Net Sales With Cost Recorded", type: "currency" },
+      { key: "costOfGoodsSold", label: "Cost of Goods Sold", type: "currency" },
+      { key: "grossProfit", label: "Gross Profit", type: "currency" },
+      // Payment information
+      { key: "netPayments", label: "Net Payments", type: "currency" },
+      { key: "grossPaymentsShopifyPayments", label: "Gross Payments from Shopify Payments", type: "currency" },
+      { key: "netSalesFromGiftCards", label: "Net Sales from Gift Cards", type: "currency" },
+      { key: "outstandingGiftCardBalance", label: "Outstanding Gift Card Balance", type: "currency" },
+      { key: "tips", label: "Tips", type: "currency" },
+    ],
+    defaultFilters: {
+      dateRange: "LAST_30_DAYS",
     },
   },
 };

@@ -115,6 +115,8 @@ export async function fetchShopifyData(
         return await fetchTrafficData(admin, filters);
       case "DISCOUNTS":
         return await fetchDiscountsData(admin, filters);
+      case "FINANCE_SUMMARY":
+        return await fetchFinanceSummaryData(admin, filters);
       default:
         return {
           success: false,
@@ -718,6 +720,167 @@ async function fetchDiscountsData(
     success: true,
     data: allDiscounts,
     recordCount: allDiscounts.length,
+  };
+}
+
+/**
+ * Fetch Finance Summary Data
+ * Fetches comprehensive financial data including orders, refunds, and transactions
+ */
+async function fetchFinanceSummaryData(
+  admin: any,
+  filters: Record<string, any>
+): Promise<FetchDataResult> {
+  const { startDate, endDate } = calculateDateRange(
+    filters.dateRange || "LAST_30_DAYS",
+    filters.customStartDate,
+    filters.customEndDate
+  );
+
+  // Build query filter
+  let queryFilter = `created_at:>='${startDate.toISOString()}' AND created_at:<='${endDate.toISOString()}'`;
+
+  if (filters.salesChannel && filters.salesChannel.length > 0) {
+    const channels = filters.salesChannel.join(" OR ");
+    queryFilter += ` AND (${channels})`;
+  }
+
+  const allOrders: any[] = [];
+  let hasNextPage = true;
+  let cursor: string | null = null;
+  const maxPages = 20;
+  let pageCount = 0;
+
+  while (hasNextPage && pageCount < maxPages) {
+    const result = await executeGraphQLWithRetry(
+      admin,
+      `#graphql
+      query GetFinanceOrders($query: String!, $cursor: String) {
+        orders(first: 250, query: $query, after: $cursor) {
+          edges {
+            node {
+              id
+              name
+              createdAt
+              totalPriceSet {
+                shopMoney {
+                  amount
+                  currencyCode
+                }
+              }
+              totalDiscountsSet {
+                shopMoney {
+                  amount
+                }
+              }
+              totalTaxSet {
+                shopMoney {
+                  amount
+                }
+              }
+              totalShippingPriceSet {
+                shopMoney {
+                  amount
+                }
+              }
+              netPaymentSet {
+                shopMoney {
+                  amount
+                }
+              }
+              totalRefundedSet {
+                shopMoney {
+                  amount
+                }
+              }
+              totalRefundedShippingSet {
+                shopMoney {
+                  amount
+                }
+              }
+              currentTotalPriceSet {
+                shopMoney {
+                  amount
+                }
+              }
+              lineItems(first: 250) {
+                edges {
+                  node {
+                    id
+                    quantity
+                    originalUnitPriceSet {
+                      shopMoney {
+                        amount
+                      }
+                    }
+                    discountedUnitPriceSet {
+                      shopMoney {
+                        amount
+                      }
+                    }
+                    variant {
+                      id
+                      inventoryItem {
+                        id
+                        unitCost {
+                          amount
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              transactions(first: 250) {
+                id
+                kind
+                status
+                gateway
+                amountSet {
+                  shopMoney {
+                    amount
+                  }
+                }
+                fees {
+                  amount {
+                    amount
+                  }
+                }
+              }
+              refunds {
+                id
+                createdAt
+                totalRefundedSet {
+                  shopMoney {
+                    amount
+                  }
+                }
+              }
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }`,
+      {
+        query: queryFilter,
+        cursor: cursor,
+      }
+    );
+
+    const orders = result.data.orders.edges.map((edge: any) => edge.node);
+    allOrders.push(...orders);
+
+    hasNextPage = result.data.orders.pageInfo.hasNextPage;
+    cursor = result.data.orders.pageInfo.endCursor;
+    pageCount++;
+  }
+
+  return {
+    success: true,
+    data: allOrders,
+    recordCount: allOrders.length,
   };
 }
 

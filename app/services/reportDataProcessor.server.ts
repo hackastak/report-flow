@@ -63,6 +63,9 @@ export async function processReportData(
       case "DISCOUNTS":
         processedData = processDiscountsData(rawData, filters);
         break;
+      case "FINANCE_SUMMARY":
+        processedData = processFinanceSummaryData(rawData, filters);
+        break;
       default:
         throw new Error(`Unknown report type: ${reportType}`);
     }
@@ -339,5 +342,135 @@ function formatDate(dateString: string): string {
  */
 function formatDateTime(dateString: string): string {
   return format(new Date(dateString), "yyyy-MM-dd HH:mm:ss");
+}
+
+/**
+ * Process Finance Summary Data
+ */
+function processFinanceSummaryData(rawData: any[], filters: Record<string, any>): any[] {
+  // Group orders by date and calculate comprehensive financial metrics
+  const financeByDate: Record<string, any> = {};
+
+  rawData.forEach((order) => {
+    const date = format(new Date(order.createdAt), "yyyy-MM-dd");
+
+    if (!financeByDate[date]) {
+      financeByDate[date] = {
+        date,
+        grossSales: 0,
+        discounts: 0,
+        returns: 0,
+        netSales: 0,
+        shippingCharges: 0,
+        returnFees: 0,
+        taxes: 0,
+        totalSales: 0,
+        netSalesWithoutCost: 0,
+        netSalesWithCost: 0,
+        costOfGoodsSold: 0,
+        grossProfit: 0,
+        netPayments: 0,
+        grossPaymentsShopifyPayments: 0,
+        netSalesFromGiftCards: 0,
+        outstandingGiftCardBalance: 0,
+        tips: 0,
+      };
+    }
+
+    // Parse financial values
+    const totalPrice = parseFloat(order.totalPriceSet.shopMoney.amount);
+    const discounts = parseFloat(order.totalDiscountsSet?.shopMoney?.amount || "0");
+    const tax = parseFloat(order.totalTaxSet?.shopMoney?.amount || "0");
+    const shipping = parseFloat(order.totalShippingPriceSet?.shopMoney?.amount || "0");
+    const netPayment = parseFloat(order.netPaymentSet?.shopMoney?.amount || totalPrice);
+    const refunded = parseFloat(order.totalRefundedSet?.shopMoney?.amount || "0");
+    const refundedShipping = parseFloat(order.totalRefundedShippingSet?.shopMoney?.amount || "0");
+    const currentTotal = parseFloat(order.currentTotalPriceSet?.shopMoney?.amount || totalPrice);
+
+    // Calculate gross sales (original order total before discounts)
+    const grossSales = totalPrice + discounts;
+
+    // Calculate net sales (after discounts and returns)
+    const netSales = currentTotal - tax - shipping;
+
+    // Calculate cost of goods sold and gross profit
+    let costOfGoodsSold = 0;
+    let netSalesWithCost = 0;
+    let netSalesWithoutCost = netSales;
+
+    if (order.lineItems?.edges) {
+      order.lineItems.edges.forEach((lineItemEdge: any) => {
+        const lineItem = lineItemEdge.node;
+        const quantity = lineItem.quantity || 0;
+        const unitCost = parseFloat(lineItem.variant?.inventoryItem?.unitCost?.amount || "0");
+        const lineItemPrice = parseFloat(lineItem.discountedUnitPriceSet?.shopMoney?.amount || "0");
+
+        if (unitCost > 0) {
+          costOfGoodsSold += unitCost * quantity;
+          netSalesWithCost += lineItemPrice * quantity;
+        } else {
+          netSalesWithoutCost += lineItemPrice * quantity;
+        }
+      });
+    }
+
+    const grossProfit = netSalesWithCost - costOfGoodsSold;
+
+    // Calculate Shopify Payments transactions
+    let shopifyPaymentsTotal = 0;
+    if (order.transactions) {
+      order.transactions.forEach((transaction: any) => {
+        if (transaction.gateway?.toLowerCase().includes("shopify") &&
+            transaction.status === "SUCCESS" &&
+            transaction.kind === "SALE") {
+          shopifyPaymentsTotal += parseFloat(transaction.amountSet?.shopMoney?.amount || "0");
+        }
+      });
+    }
+
+    // Accumulate metrics
+    financeByDate[date].grossSales += grossSales;
+    financeByDate[date].discounts += discounts;
+    financeByDate[date].returns += refunded;
+    financeByDate[date].netSales += netSales;
+    financeByDate[date].shippingCharges += shipping;
+    financeByDate[date].returnFees += refundedShipping;
+    financeByDate[date].taxes += tax;
+    financeByDate[date].totalSales += currentTotal;
+    financeByDate[date].netSalesWithoutCost += netSalesWithoutCost;
+    financeByDate[date].netSalesWithCost += netSalesWithCost;
+    financeByDate[date].costOfGoodsSold += costOfGoodsSold;
+    financeByDate[date].grossProfit += grossProfit;
+    financeByDate[date].netPayments += netPayment;
+    financeByDate[date].grossPaymentsShopifyPayments += shopifyPaymentsTotal;
+    // Note: Gift card and tips data would require additional API calls
+  });
+
+  // Convert to array and format currency
+  const financeData = Object.values(financeByDate).map((day: any) => ({
+    date: day.date,
+    grossSales: formatCurrency(day.grossSales),
+    discounts: formatCurrency(day.discounts),
+    returns: formatCurrency(day.returns),
+    netSales: formatCurrency(day.netSales),
+    shippingCharges: formatCurrency(day.shippingCharges),
+    returnFees: formatCurrency(day.returnFees),
+    taxes: formatCurrency(day.taxes),
+    totalSales: formatCurrency(day.totalSales),
+    netSalesWithoutCost: formatCurrency(day.netSalesWithoutCost),
+    netSalesWithCost: formatCurrency(day.netSalesWithCost),
+    costOfGoodsSold: formatCurrency(day.costOfGoodsSold),
+    grossProfit: formatCurrency(day.grossProfit),
+    netPayments: formatCurrency(day.netPayments),
+    grossPaymentsShopifyPayments: formatCurrency(day.grossPaymentsShopifyPayments),
+    netSalesFromGiftCards: formatCurrency(day.netSalesFromGiftCards),
+    outstandingGiftCardBalance: formatCurrency(day.outstandingGiftCardBalance),
+    tips: formatCurrency(day.tips),
+  }));
+
+  // Sort by date
+  financeData.sort((a, b) => a.date.localeCompare(b.date));
+
+  return financeData;
 }
 
