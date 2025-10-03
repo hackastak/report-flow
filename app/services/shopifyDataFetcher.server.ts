@@ -117,6 +117,8 @@ export async function fetchShopifyData(
         return await fetchDiscountsData(admin, filters);
       case "FINANCE_SUMMARY":
         return await fetchFinanceSummaryData(admin, filters);
+      case "CUSTOM":
+        return await fetchCustomReportData(admin, filters);
       default:
         return {
           success: false,
@@ -881,6 +883,326 @@ async function fetchFinanceSummaryData(
     success: true,
     data: allOrders,
     recordCount: allOrders.length,
+  };
+}
+
+/**
+ * Fetch Custom Report Data
+ * Dynamically builds GraphQL query based on selected fields and data source
+ */
+async function fetchCustomReportData(
+  admin: any,
+  filters: Record<string, any>
+): Promise<FetchDataResult> {
+  const dataSource = filters.dataSource || "ORDERS";
+  const { startDate, endDate } = calculateDateRange(
+    filters.dateRange || "LAST_30_DAYS",
+    filters.customStartDate,
+    filters.customEndDate
+  );
+
+  // Route to appropriate data source handler
+  switch (dataSource) {
+    case "ORDERS":
+      return await fetchCustomOrdersData(admin, filters, startDate, endDate);
+    case "PRODUCTS":
+      return await fetchCustomProductsData(admin, filters);
+    case "CUSTOMERS":
+      return await fetchCustomCustomersData(admin, filters);
+    default:
+      return {
+        success: false,
+        data: [],
+        recordCount: 0,
+        error: `Unknown data source: ${dataSource}`,
+      };
+  }
+}
+
+/**
+ * Fetch custom orders data with dynamic field selection
+ */
+async function fetchCustomOrdersData(
+  admin: any,
+  filters: Record<string, any>,
+  startDate: Date,
+  endDate: Date
+): Promise<FetchDataResult> {
+  // Build query filter
+  const queryFilter = `created_at:>='${startDate.toISOString()}' AND created_at:<='${endDate.toISOString()}'`;
+
+  const allOrders: any[] = [];
+  let hasNextPage = true;
+  let cursor: string | null = null;
+  const maxPages = 20;
+  let pageCount = 0;
+
+  // Build GraphQL query dynamically based on selected fields
+  // For now, fetch all common fields - the processor will filter based on selectedFields
+  while (hasNextPage && pageCount < maxPages) {
+    const result = await executeGraphQLWithRetry(
+      admin,
+      `#graphql
+      query GetCustomOrders($query: String!, $cursor: String) {
+        orders(first: 250, query: $query, after: $cursor) {
+          edges {
+            node {
+              id
+              name
+              confirmationNumber
+              createdAt
+              updatedAt
+              processedAt
+              cancelledAt
+              closedAt
+              currencyCode
+              currentSubtotalPriceSet { shopMoney { amount } }
+              currentTotalPriceSet { shopMoney { amount } }
+              currentTotalTaxSet { shopMoney { amount } }
+              currentTotalDiscountsSet { shopMoney { amount } }
+              currentShippingPriceSet { shopMoney { amount } }
+              subtotalPriceSet { shopMoney { amount } }
+              totalPriceSet { shopMoney { amount } }
+              totalTaxSet { shopMoney { amount } }
+              totalDiscountsSet { shopMoney { amount } }
+              totalShippingPriceSet { shopMoney { amount } }
+              totalTipReceivedSet { shopMoney { amount } }
+              displayFinancialStatus
+              displayFulfillmentStatus
+              cancelReason
+              confirmed
+              closed
+              fulfillable
+              capturable
+              email
+              phone
+              customerLocale
+              customerAcceptsMarketing
+              customer {
+                firstName
+                lastName
+                displayName
+              }
+              shippingAddress {
+                address1
+                address2
+                city
+                province
+                provinceCode
+                country
+                countryCodeV2
+                zip
+              }
+              billingAddress {
+                address1
+                address2
+                city
+                province
+                provinceCode
+                country
+                countryCodeV2
+                zip
+              }
+              note
+              tags
+              sourceName
+              channelInformation {
+                channelDefinition {
+                  handle
+                }
+              }
+              app {
+                name
+              }
+              clientIp
+              poNumber
+              taxExempt
+              taxesIncluded
+              estimatedTaxes
+              currentSubtotalLineItemsQuantity
+              currentTotalWeight
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }`,
+      {
+        query: queryFilter,
+        cursor: cursor,
+      }
+    );
+
+    const orders = result.data.orders.edges.map((edge: any) => edge.node);
+    allOrders.push(...orders);
+
+    hasNextPage = result.data.orders.pageInfo.hasNextPage;
+    cursor = result.data.orders.pageInfo.endCursor;
+    pageCount++;
+  }
+
+  return {
+    success: true,
+    data: allOrders,
+    recordCount: allOrders.length,
+  };
+}
+
+/**
+ * Fetch custom products data with dynamic field selection
+ */
+async function fetchCustomProductsData(
+  admin: any,
+  filters: Record<string, any>
+): Promise<FetchDataResult> {
+  const allProducts: any[] = [];
+  let hasNextPage = true;
+  let cursor: string | null = null;
+  const maxPages = 20;
+  let pageCount = 0;
+
+  while (hasNextPage && pageCount < maxPages) {
+    const result = await executeGraphQLWithRetry(
+      admin,
+      `#graphql
+      query GetCustomProducts($cursor: String) {
+        products(first: 250, after: $cursor) {
+          edges {
+            node {
+              id
+              title
+              handle
+              description
+              productType
+              vendor
+              status
+              createdAt
+              updatedAt
+              publishedAt
+              variants(first: 250) {
+                nodes {
+                  id
+                  title
+                  sku
+                  barcode
+                  price
+                  compareAtPrice
+                  position
+                  taxable
+                  availableForSale
+                  inventoryQuantity
+                }
+              }
+              priceRangeV2 {
+                minVariantPrice { amount }
+                maxVariantPrice { amount }
+              }
+              tags
+              isGiftCard
+              hasOnlyDefaultVariant
+              hasOutOfStockVariants
+              totalInventory
+              tracksInventory
+              variantsCount { count }
+              seo {
+                title
+                description
+              }
+              onlineStoreUrl
+              onlineStorePreviewUrl
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }`,
+      {
+        cursor: cursor,
+      }
+    );
+
+    const products = result.data.products.edges.map((edge: any) => edge.node);
+    allProducts.push(...products);
+
+    hasNextPage = result.data.products.pageInfo.hasNextPage;
+    cursor = result.data.products.pageInfo.endCursor;
+    pageCount++;
+  }
+
+  return {
+    success: true,
+    data: allProducts,
+    recordCount: allProducts.length,
+  };
+}
+
+/**
+ * Fetch custom customers data with dynamic field selection
+ */
+async function fetchCustomCustomersData(
+  admin: any,
+  filters: Record<string, any>
+): Promise<FetchDataResult> {
+  const allCustomers: any[] = [];
+  let hasNextPage = true;
+  let cursor: string | null = null;
+  const maxPages = 20;
+  let pageCount = 0;
+
+  while (hasNextPage && pageCount < maxPages) {
+    const result = await executeGraphQLWithRetry(
+      admin,
+      `#graphql
+      query GetCustomCustomers($cursor: String) {
+        customers(first: 250, after: $cursor) {
+          edges {
+            node {
+              id
+              email
+              firstName
+              lastName
+              displayName
+              phone
+              createdAt
+              updatedAt
+              amountSpent { amount }
+              numberOfOrders
+              lifetimeDuration
+              locale
+              state
+              taxExempt
+              verifiedEmail
+              note
+              tags
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }`,
+      {
+        cursor: cursor,
+      }
+    );
+
+    const customers = result.data.customers.edges.map((edge: any) => edge.node);
+    allCustomers.push(...customers);
+
+    hasNextPage = result.data.customers.pageInfo.hasNextPage;
+    cursor = result.data.customers.pageInfo.endCursor;
+    pageCount++;
+  }
+
+  return {
+    success: true,
+    data: allCustomers,
+    recordCount: allCustomers.length,
   };
 }
 

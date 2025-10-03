@@ -13,7 +13,8 @@ export type ReportType =
   | "INVENTORY"
   | "TRAFFIC"
   | "DISCOUNTS"
-  | "FINANCE_SUMMARY";
+  | "FINANCE_SUMMARY"
+  | "CUSTOM";
 
 export type FilterType =
   | "DATE_RANGE"
@@ -520,6 +521,41 @@ export const REPORT_TYPES: Record<ReportType, ReportTypeConfig> = {
     ],
     defaultFilters: {
       dateRange: "LAST_30_DAYS",
+    },
+  },
+
+  CUSTOM: {
+    type: "CUSTOM",
+    name: "Custom Report",
+    description: "Create your own custom report with any fields available from the Shopify API",
+    icon: "⚙️",
+    category: "analytics",
+    filters: [
+      {
+        key: "dateRange",
+        label: "Date Range",
+        type: "select",
+        options: DATE_RANGE_OPTIONS,
+        required: true,
+        defaultValue: "LAST_30_DAYS",
+      },
+      {
+        key: "dataSource",
+        label: "Data Source",
+        type: "select",
+        options: [
+          { value: "ORDERS", label: "Orders" },
+          { value: "PRODUCTS", label: "Products" },
+          { value: "CUSTOMERS", label: "Customers" },
+        ],
+        required: true,
+        defaultValue: "ORDERS",
+      },
+    ],
+    dataFields: [], // Fields will be dynamically selected by the user
+    defaultFilters: {
+      dateRange: "LAST_30_DAYS",
+      dataSource: "ORDERS",
     },
   },
 };

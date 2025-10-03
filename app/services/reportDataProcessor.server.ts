@@ -67,6 +67,9 @@ export async function processReportData(
       case "FINANCE_SUMMARY":
         processedData = processFinanceSummaryData(rawData, filters);
         break;
+      case "CUSTOM":
+        processedData = processCustomReportData(rawData, filters, selectedFields);
+        break;
       default:
         throw new Error(`Unknown report type: ${reportType}`);
     }
@@ -74,8 +77,21 @@ export async function processReportData(
     // Determine which fields to include in the CSV
     let fieldsToInclude = reportConfig.dataFields;
 
-    if (selectedFields && selectedFields.length > 0) {
-      // Filter and order fields based on user selection
+    // For custom reports, build field definitions from selected fields
+    if (reportType === "CUSTOM" && selectedFields && selectedFields.length > 0) {
+      const { getAllCustomReportFields } = await import("../config/customReportFields");
+      const allFields = getAllCustomReportFields();
+
+      fieldsToInclude = selectedFields
+        .map(sf => allFields.find(f => f.key === sf.key))
+        .filter(Boolean)
+        .sort((a, b) => {
+          const orderA = selectedFields.find(f => f.key === a!.key)?.order ?? 999;
+          const orderB = selectedFields.find(f => f.key === b!.key)?.order ?? 999;
+          return orderA - orderB;
+        }) as any[];
+    } else if (selectedFields && selectedFields.length > 0) {
+      // Filter and order fields based on user selection for standard reports
       const selectedFieldKeys = new Set(selectedFields.map(f => f.key));
       fieldsToInclude = reportConfig.dataFields
         .filter(field => selectedFieldKeys.has(field.key))
@@ -488,5 +504,102 @@ function processFinanceSummaryData(rawData: any[], filters: Record<string, any>)
   financeData.sort((a, b) => a.date.localeCompare(b.date));
 
   return financeData;
+}
+
+/**
+ * Process Custom Report Data
+ * Dynamically processes data based on selected fields and data source
+ */
+function processCustomReportData(
+  rawData: any[],
+  filters: Record<string, any>,
+  selectedFields?: Array<{ key: string; order: number }>
+): any[] {
+  if (!selectedFields || selectedFields.length === 0) {
+    return [];
+  }
+
+  const dataSource = filters.dataSource || "ORDERS";
+
+  // Import field configuration dynamically
+  const { getFieldByKey } = require("../config/customReportFields");
+
+  return rawData.map((item) => {
+    const processedItem: any = {};
+
+    selectedFields.forEach((sf) => {
+      const field = getFieldByKey(sf.key);
+      if (!field) return;
+
+      // Extract value using graphqlPath
+      const value = extractValueFromPath(item, field.graphqlPath);
+
+      // Format value based on type
+      processedItem[field.key] = formatCustomFieldValue(value, field.type);
+    });
+
+    return processedItem;
+  });
+}
+
+/**
+ * Extract value from nested object using dot notation path
+ */
+function extractValueFromPath(obj: any, path: string): any {
+  if (!obj || !path) return null;
+
+  const parts = path.split(".");
+  let current = obj;
+
+  for (const part of parts) {
+    if (current === null || current === undefined) {
+      return null;
+    }
+
+    // Handle array notation (e.g., "variants.nodes")
+    if (part === "nodes" && Array.isArray(current)) {
+      // For arrays, return the first item or join multiple items
+      if (current.length === 0) return null;
+      if (current.length === 1) {
+        current = current[0];
+        continue;
+      }
+      // For multiple items, we'll need to handle this specially
+      // For now, just return the first item
+      current = current[0];
+      continue;
+    }
+
+    current = current[part];
+  }
+
+  return current;
+}
+
+/**
+ * Format custom field value based on type
+ */
+function formatCustomFieldValue(value: any, type: string): string {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  switch (type) {
+    case "currency":
+      return formatCurrency(parseFloat(value));
+    case "date":
+      return formatDate(value);
+    case "datetime":
+      return formatDateTime(value);
+    case "boolean":
+      return value ? "Yes" : "No";
+    case "number":
+      return String(value);
+    case "string":
+    case "email":
+    case "url":
+    default:
+      return String(value);
+  }
 }
 

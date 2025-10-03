@@ -18,6 +18,8 @@ import {
   FieldSelectionForm,
   type SelectedField,
 } from "../components/FieldSelectionForm";
+import { CustomFieldSelectionForm } from "../components/CustomFieldSelectionForm";
+import type { DataSource } from "../config/customReportFields";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticate.admin(request);
@@ -358,13 +360,23 @@ export default function NewReport() {
       {/* Field Selection */}
       <s-section heading="Select Report Fields">
         <s-paragraph>
-          Choose which data fields to include in your report. You can customize the columns that will appear in the CSV export.
+          {reportConfig.type === "CUSTOM"
+            ? "Choose which data fields to include in your custom report. Fields are organized by category for easier selection."
+            : "Choose which data fields to include in your report. You can customize the columns that will appear in the CSV export."
+          }
         </s-paragraph>
         <div style={{ marginTop: "1rem" }}>
-          <FieldSelectionForm
-            availableFields={reportConfig.dataFields}
-            onChange={handleFieldsChange}
-          />
+          {reportConfig.type === "CUSTOM" ? (
+            <CustomFieldSelectionForm
+              dataSource={(filterValues.dataSource as DataSource) || "ORDERS"}
+              onChange={handleFieldsChange}
+            />
+          ) : (
+            <FieldSelectionForm
+              availableFields={reportConfig.dataFields}
+              onChange={handleFieldsChange}
+            />
+          )}
         </div>
         {errors.fields && (
           <div style={{ marginTop: "1rem" }}>
