@@ -20,6 +20,7 @@ import type { ReportType } from "../config/reportTypes";
 import { getReportTypeConfig } from "../config/reportTypes";
 import { categorizeError } from "../utils/errorCategorization";
 import * as fs from "fs";
+import shopify from "../shopify.server";
 
 export interface ExecuteReportOptions {
   reportScheduleId: string;
@@ -86,18 +87,27 @@ export async function executeReport(
 
     // Step 2: Fetch data from Shopify
     console.log(`[Report Execution] Fetching data from Shopify...`);
-    
-    // Convert filters array to object
+
+    // Convert filters array to object and parse JSON values
     const filtersObj: Record<string, any> = {};
     reportSchedule.filters.forEach((filter) => {
-      filtersObj[filter.filterKey] = filter.filterValue;
+      try {
+        // Parse the JSON string back to its original type (array, string, etc.)
+        filtersObj[filter.filterKey] = JSON.parse(filter.filterValue);
+      } catch (error) {
+        // If parsing fails, use the raw value
+        filtersObj[filter.filterKey] = filter.filterValue;
+      }
     });
 
+    // Create admin GraphQL client using unauthenticated.admin
+    // This is the correct way to create an admin client for background jobs in React Router apps
+    const { admin } = await shopify.unauthenticated.admin(shop);
+
     const fetchResult = await fetchShopifyData({
-      shop,
-      accessToken,
       reportType: reportSchedule.reportType as ReportType,
       filters: filtersObj,
+      admin,
     });
 
     if (!fetchResult.success) {
@@ -178,8 +188,9 @@ export async function executeReport(
     // Step 6: Update next run time
     const nextRunAt = calculateNextRunTime(
       reportSchedule.frequency,
-      reportSchedule.scheduleTime,
-      reportSchedule.scheduleDay,
+      reportSchedule.timeOfDay,
+      reportSchedule.dayOfWeek ?? undefined,
+      reportSchedule.dayOfMonth ?? undefined,
       reportSchedule.timezone
     );
 

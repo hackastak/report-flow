@@ -189,6 +189,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   if (request.method === "PUT") {
     try {
       const data = await request.json();
+      console.log("[API] Update report request data:", JSON.stringify(data, null, 2));
 
       // Verify report exists and belongs to this shop
       const existingReport = await prisma.reportSchedule.findFirst({
@@ -246,8 +247,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
           reportType: data.reportType,
           frequency: data.schedule.frequency,
           timeOfDay: data.schedule.timeOfDay,
-          dayOfWeek: data.schedule.dayOfWeek,
-          dayOfMonth: data.schedule.dayOfMonth,
+          dayOfWeek: data.schedule.dayOfWeek ?? null,
+          dayOfMonth: data.schedule.dayOfMonth ?? null,
           timezone: data.schedule.timezone,
           nextRunAt: nextRunAt,
           filters: {
@@ -266,9 +267,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
           },
           fields: {
             deleteMany: {},
-            create: (data.selectedFields || []).map((field: any) => ({
+            create: (data.selectedFields || []).map((field: any, index: number) => ({
               fieldKey: field.key,
-              fieldOrder: field.order,
+              fieldOrder: field.order ?? index,
             })),
           },
         },

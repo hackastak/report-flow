@@ -164,28 +164,29 @@ async function executeReportsForShop(
 
 /**
  * Get shop session with access token
- * 
+ *
  * In a production app, you would:
  * 1. Store sessions in database
  * 2. Use Shopify's session storage
  * 3. Refresh tokens if needed
- * 
+ *
  * For now, we'll use Shopify's session storage
  */
 async function getShopSession(shop: string): Promise<{ accessToken: string } | null> {
   try {
-    // Import shopify from the server file
-    const { shopify } = await import("../shopify.server");
-    
+    // Import sessionStorage from the server file
+    const { sessionStorage } = await import("../shopify.server");
+
     // Get session from Shopify's session storage
-    const sessionId = shopify.session.getOfflineId(shop);
-    const session = await shopify.config.sessionStorage.loadSession(sessionId);
-    
+    // Construct offline session ID manually (format: offline_<shop>)
+    const sessionId = `offline_${shop}`;
+    const session = await sessionStorage.loadSession(sessionId);
+
     if (!session || !session.accessToken) {
       console.error(`[Scheduler] No valid session for shop: ${shop}`);
       return null;
     }
-    
+
     return {
       accessToken: session.accessToken,
     };

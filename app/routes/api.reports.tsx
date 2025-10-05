@@ -109,8 +109,8 @@ export async function action({ request }: ActionFunctionArgs) {
           reportType: data.reportType,
           frequency: data.schedule.frequency,
           timeOfDay: data.schedule.timeOfDay,
-          dayOfWeek: data.schedule.dayOfWeek,
-          dayOfMonth: data.schedule.dayOfMonth,
+          dayOfWeek: data.schedule.dayOfWeek ?? null,
+          dayOfMonth: data.schedule.dayOfMonth ?? null,
           timezone: data.schedule.timezone,
           isActive: true,
           nextRunAt: nextRunAt,
@@ -127,9 +127,9 @@ export async function action({ request }: ActionFunctionArgs) {
             })),
           },
           fields: {
-            create: (data.selectedFields || []).map((field: any) => ({
+            create: (data.selectedFields || []).map((field: any, index: number) => ({
               fieldKey: field.key,
-              fieldOrder: field.order,
+              fieldOrder: field.order ?? index,
             })),
           },
         },
