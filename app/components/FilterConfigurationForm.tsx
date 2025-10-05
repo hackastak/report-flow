@@ -41,7 +41,8 @@ export function FilterConfigurationForm({
   // Notify parent of changes
   useEffect(() => {
     onChange(filterValues);
-  }, [filterValues, onChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterValues]);
 
   const handleFilterChange = (key: string, value: any) => {
     setFilterValues((prev) => ({

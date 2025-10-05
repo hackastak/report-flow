@@ -42,7 +42,8 @@ export function FieldSelectionForm({
         order: index,
       }));
     onChange(selectedFields);
-  }, [selectedFieldKeys, availableFields, onChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFieldKeys, availableFields]);
 
   const handleToggleField = (fieldKey: string) => {
     setSelectedFieldKeys(prev => {

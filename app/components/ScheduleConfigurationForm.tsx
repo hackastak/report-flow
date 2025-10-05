@@ -69,7 +69,8 @@ export function ScheduleConfigurationForm({
     }
 
     onChange(config);
-  }, [frequency, timeOfDay, dayOfWeek, dayOfMonth, timezone, onChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frequency, timeOfDay, dayOfWeek, dayOfMonth, timezone]);
 
   // Calculate next run time
   const nextRunTime = calculateNextRunTime(
