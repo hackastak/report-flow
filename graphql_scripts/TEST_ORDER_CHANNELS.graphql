@@ -1,0 +1,27 @@
+# Test Query: Check Sales Channels of Your Orders
+# Run this in Shopify GraphQL Explorer to see what channels your orders are using
+
+query TestOrderChannels {
+  orders(first: 10, query: "created_at:>='2025-09-01T00:00:00.000Z'") {
+    edges {
+      node {
+        id
+        name
+        createdAt
+        channelInformation {
+          channelId
+          channelDefinition {
+            channelName
+            handle
+          }
+        }
+        # Alternative way to check the source
+        sourceIdentifier
+        # Check if it's a draft order
+        displayFinancialStatus
+        displayFulfillmentStatus
+      }
+    }
+  }
+}
+

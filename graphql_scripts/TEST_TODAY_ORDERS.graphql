@@ -1,0 +1,42 @@
+# Test query for orders created TODAY
+# This should definitely return your October 5 orders
+# Run this in: https://[your-store].myshopify.com/admin/api/graphql/explorer.html
+
+query TestTodayOrders {
+  orders(
+    first: 10
+    query: "created_at:>='2025-10-05T00:00:00.000Z' AND created_at:<='2025-10-05T23:59:59.999Z'"
+  ) {
+    edges {
+      node {
+        id
+        name
+        createdAt
+        totalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+        totalDiscountsSet {
+          shopMoney {
+            amount
+          }
+        }
+        totalTaxSet {
+          shopMoney {
+            amount
+          }
+        }
+        totalShippingPriceSet {
+          shopMoney {
+            amount
+          }
+        }
+      }
+    }
+  }
+}
+
+# This should return all 10 of your orders from October 5, 2025
+

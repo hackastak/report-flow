@@ -1,0 +1,42 @@
+# Test the exact query that ReportFlow uses for Finance Summary
+# This includes the date filter that might be causing issues
+# Run this in: https://[your-store].myshopify.com/admin/api/graphql/explorer.html
+
+# For Last 30 Days (if today is Oct 5, 2025):
+# Start: September 6, 2025 00:00:00
+# End: October 5, 2025 23:59:59
+
+query TestFinanceQueryWithDateFilter {
+  orders(
+    first: 10
+    query: "created_at:>='2025-09-06T00:00:00.000Z' AND created_at:<='2025-10-05T23:59:59.999Z'"
+  ) {
+    edges {
+      node {
+        id
+        name
+        createdAt
+        totalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+        totalDiscountsSet {
+          shopMoney {
+            amount
+          }
+        }
+        totalTaxSet {
+          shopMoney {
+            amount
+          }
+        }
+      }
+    }
+  }
+}
+
+# If this returns your orders, then the query is working correctly
+# If this returns empty, try adjusting the dates to match your timezone
+

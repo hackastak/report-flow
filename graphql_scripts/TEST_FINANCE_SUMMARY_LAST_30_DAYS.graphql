@@ -1,0 +1,144 @@
+# Finance Summary Test Query - Last 30 Days
+# Use this in the Shopify GraphQL Admin API explorer
+# URL: https://[your-store].myshopify.com/admin/api/graphql/explorer.html
+
+# This query matches exactly what ReportFlow uses for the Finance Summary report
+# with the LAST_30_DAYS date range
+
+# IMPORTANT: Update the dates below to match your actual date range
+# The query below uses September 5, 2024 to October 5, 2025 as an example
+# You should calculate: today minus 29 days to today
+
+query GetFinanceOrdersLast30Days {
+  orders(
+    first: 250
+    query: "created_at:>='2024-09-06T00:00:00Z' AND created_at<='2025-10-05T23:59:59Z'"
+  ) {
+    edges {
+      node {
+        id
+        name
+        createdAt
+        
+        # All the financial fields needed for Finance Summary
+        totalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+        
+        totalDiscountsSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        totalTaxSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        totalShippingPriceSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        netPaymentSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        totalRefundedSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        totalRefundedShippingSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        currentTotalPriceSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        # Line items for COGS calculation
+        lineItems(first: 250) {
+          edges {
+            node {
+              id
+              quantity
+              originalUnitPriceSet {
+                shopMoney {
+                  amount
+                }
+              }
+              discountedUnitPriceSet {
+                shopMoney {
+                  amount
+                }
+              }
+              variant {
+                id
+                inventoryItem {
+                  id
+                  unitCost {
+                    amount
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        # THIS IS THE FIXED FIELD - transactions is now a direct array, not a connection
+        transactions {
+          id
+          kind
+          status
+          gateway
+          amountSet {
+            shopMoney {
+              amount
+            }
+          }
+          fees {
+            amount {
+              amount
+            }
+          }
+        }
+        
+        # Refunds
+        refunds {
+          id
+          createdAt
+          totalRefundedSet {
+            shopMoney {
+              amount
+            }
+          }
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+# Expected output:
+# - You should see a list of orders
+# - Each order should have financial data populated
+# - The transactions field should now work correctly (it was the bug!)
+# - If you see no orders, adjust the date range to match when your test orders were created
+

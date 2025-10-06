@@ -1,0 +1,27 @@
+query TestFinanceSummaryWithDateRange {
+  orders(
+    first: 250
+    query: "created_at:>='2024-09-01T00:00:00Z' AND created_at<='2025-10-05T23:59:59Z'"
+  ) {
+    edges {
+      node {
+        id
+        name
+        createdAt
+        totalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+        transactions {
+          id
+          kind
+          status
+          gateway
+        }
+      }
+    }
+  }
+}
+

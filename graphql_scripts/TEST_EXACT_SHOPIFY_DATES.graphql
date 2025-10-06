@@ -1,0 +1,79 @@
+# Test with the EXACT date range shown in your Shopify Finance Summary
+# Your screenshot shows: "Sep 5 - Oct 5, 2025"
+# Paste this into: https://[your-store].myshopify.com/admin/api/graphql/explorer.html
+
+query TestExactShopifyDateRange {
+  orders(
+    first: 250
+    query: "created_at:>='2025-09-05T00:00:00Z' AND created_at<='2025-10-05T23:59:59Z'"
+  ) {
+    edges {
+      node {
+        id
+        name
+        createdAt
+        
+        # Financial data
+        totalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+        
+        totalDiscountsSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        totalTaxSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        totalShippingPriceSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        netPaymentSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        # This is the fixed field - should work now!
+        transactions {
+          id
+          kind
+          status
+          gateway
+          amountSet {
+            shopMoney {
+              amount
+            }
+          }
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+# EXPECTED RESULT:
+# - You should see orders with financial data
+# - The transactions field should be populated
+# - If this works but ReportFlow doesn't, the issue is the date range calculation
+
+# NEXT STEP:
+# If this query returns orders, then the problem is that ReportFlow's "Last 30 Days"
+# calculation doesn't match the dates when your orders were created.
+#
+# Solution: Use "Last 90 Days" or "Custom" date range in ReportFlow
+

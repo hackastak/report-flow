@@ -1,0 +1,45 @@
+# DEBUG: Test if we can get ANY orders at all
+# Paste this into: https://[your-store].myshopify.com/admin/api/graphql/explorer.html
+
+query DebugOrders {
+  # First, let's see if there are ANY orders at all
+  orders(first: 10, reverse: true) {
+    edges {
+      node {
+        id
+        name
+        createdAt
+        totalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+      }
+    }
+  }
+}
+
+# If this returns orders, then try this query with the last 30 days filter:
+# 
+# query DebugOrdersLast30Days {
+#   orders(
+#     first: 250
+#     query: "created_at:>='2024-09-06T00:00:00Z' AND created_at<='2025-10-05T23:59:59Z'"
+#   ) {
+#     edges {
+#       node {
+#         id
+#         name
+#         createdAt
+#         totalPriceSet {
+#           shopMoney {
+#             amount
+#             currencyCode
+#           }
+#         }
+#       }
+#     }
+#   }
+# }
+

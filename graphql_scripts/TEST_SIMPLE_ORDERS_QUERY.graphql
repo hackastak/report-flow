@@ -1,0 +1,52 @@
+# Simple Orders Test Query
+# Use this in the Shopify GraphQL Admin API explorer
+# URL: https://[your-store].myshopify.com/admin/api/graphql/explorer.html
+
+# This is a simplified query to test if you have any orders at all
+# and to see what data is available
+
+query TestOrders {
+  # First, let's just get the last 10 orders without any date filter
+  orders(first: 10, reverse: true) {
+    edges {
+      node {
+        id
+        name
+        createdAt
+        totalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+        totalDiscountsSet {
+          shopMoney {
+            amount
+          }
+        }
+        totalTaxSet {
+          shopMoney {
+            amount
+          }
+        }
+        netPaymentSet {
+          shopMoney {
+            amount
+          }
+        }
+        # Check if transactions field works
+        transactions {
+          id
+          kind
+          status
+          gateway
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+    }
+  }
+}
+

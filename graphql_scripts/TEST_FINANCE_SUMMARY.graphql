@@ -1,0 +1,56 @@
+query TestFinanceSummary {
+  # Get the most recent 10 orders (no date filter)
+  orders(first: 10, reverse: true) {
+    edges {
+      node {
+        id
+        name
+        createdAt
+        totalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+        totalDiscountsSet {
+          shopMoney {
+            amount
+          }
+        }
+        totalTaxSet {
+          shopMoney {
+            amount
+          }
+        }
+        totalShippingPriceSet {
+          shopMoney {
+            amount
+          }
+        }
+        netPaymentSet {
+          shopMoney {
+            amount
+          }
+        }
+        # This is the field that was broken - now fixed!
+        transactions {
+          id
+          kind
+          status
+          gateway
+          amountSet {
+            shopMoney {
+              amount
+            }
+          }
+          fees {
+            amount {
+              amount
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

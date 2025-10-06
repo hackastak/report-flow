@@ -1,0 +1,21 @@
+# Test if you have ANY orders at all in your dev store
+# Run this in: https://[your-store].myshopify.com/admin/api/graphql/explorer.html
+
+query TestBasicOrders {
+  orders(first: 10) {
+    edges {
+      node {
+        id
+        name
+        createdAt
+        totalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+      }
+    }
+  }
+}
+

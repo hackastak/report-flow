@@ -1,0 +1,140 @@
+# Finance Summary Report Test Query
+# Use this in the Shopify GraphQL Admin API explorer
+# URL: https://[your-store].myshopify.com/admin/api/graphql/explorer.html
+
+# This query fetches all the data needed for the Finance Summary report
+# Replace the date range with your desired dates
+
+query GetFinanceOrders {
+  orders(
+    first: 10
+    query: "created_at:>='2024-09-05T00:00:00Z' AND created_at:>='2025-10-05T23:59:59Z'"
+  ) {
+    edges {
+      node {
+        id
+        name
+        createdAt
+        
+        # Total amounts
+        totalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+        
+        # Discounts
+        totalDiscountsSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        # Taxes
+        totalTaxSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        # Shipping
+        totalShippingPriceSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        # Net payment
+        netPaymentSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        # Refunds
+        totalRefundedSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        totalRefundedShippingSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        # Current total (after refunds)
+        currentTotalPriceSet {
+          shopMoney {
+            amount
+          }
+        }
+        
+        # Line items for cost of goods sold calculation
+        lineItems(first: 250) {
+          edges {
+            node {
+              id
+              quantity
+              originalUnitPriceSet {
+                shopMoney {
+                  amount
+                }
+              }
+              discountedUnitPriceSet {
+                shopMoney {
+                  amount
+                }
+              }
+              variant {
+                id
+                inventoryItem {
+                  id
+                  unitCost {
+                    amount
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        # Transactions for payment gateway info
+        transactions {
+          id
+          kind
+          status
+          gateway
+          amountSet {
+            shopMoney {
+              amount
+            }
+          }
+          fees {
+            amount {
+              amount
+            }
+          }
+        }
+        
+        # Refunds detail
+        refunds {
+          id
+          createdAt
+          totalRefundedSet {
+            shopMoney {
+              amount
+            }
+          }
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+

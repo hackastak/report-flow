@@ -1,0 +1,18 @@
+query TestDateRange {
+  orders(first: 10, query: "created_at:>='2025-09-05T00:00:00.000Z' AND created_at<='2025-10-05T23:59:59.999Z'") {
+    edges {
+      node {
+        id
+        name
+        createdAt
+        totalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+      }
+    }
+  }
+}
+
