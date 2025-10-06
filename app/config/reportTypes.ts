@@ -153,12 +153,14 @@ export const REPORT_TYPES: Record<ReportType, ReportTypeConfig> = {
         label: "Sales Channel",
         type: "multiselect",
         options: [
+          { value: "all", label: "All Channels" },
           { value: "online_store", label: "Online Store" },
           { value: "pos", label: "Point of Sale" },
           { value: "mobile", label: "Mobile" },
           { value: "facebook", label: "Facebook" },
           { value: "instagram", label: "Instagram" },
         ],
+        defaultValue: ["all"],
       },
       {
         key: "location",
@@ -392,9 +394,11 @@ export const REPORT_TYPES: Record<ReportType, ReportTypeConfig> = {
         label: "Sales Channel",
         type: "multiselect",
         options: [
+          { value: "all", label: "All Channels" },
           { value: "online_store", label: "Online Store" },
           { value: "mobile", label: "Mobile" },
         ],
+        defaultValue: ["all"],
       },
     ],
     dataFields: [
@@ -488,12 +492,14 @@ export const REPORT_TYPES: Record<ReportType, ReportTypeConfig> = {
         label: "Sales Channel",
         type: "multiselect",
         options: [
+          { value: "all", label: "All Channels" },
           { value: "online_store", label: "Online Store" },
           { value: "pos", label: "Point of Sale" },
           { value: "mobile", label: "Mobile" },
           { value: "facebook", label: "Facebook" },
           { value: "instagram", label: "Instagram" },
         ],
+        defaultValue: ["all"],
       },
     ],
     dataFields: [

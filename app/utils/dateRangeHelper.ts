@@ -1,13 +1,13 @@
 /**
  * Date Range Helper Utilities
- * 
+ *
  * Provides functions to calculate date ranges for reports
  * based on predefined types (TODAY, LAST_7_DAYS, etc.)
+ *
+ * NOTE: All date calculations use UTC to ensure consistency with Shopify's API
  */
 
 import {
-  startOfDay,
-  endOfDay,
   subDays,
   startOfMonth,
   endOfMonth,
@@ -27,7 +27,34 @@ export interface DateRange {
 }
 
 /**
+ * Get start of day in UTC
+ */
+function startOfDayUTC(date: Date): Date {
+  const utcDate = new Date(Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    0, 0, 0, 0
+  ));
+  return utcDate;
+}
+
+/**
+ * Get end of day in UTC
+ */
+function endOfDayUTC(date: Date): Date {
+  const utcDate = new Date(Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    23, 59, 59, 999
+  ));
+  return utcDate;
+}
+
+/**
  * Calculate date range based on DateRangeType
+ * All dates are calculated in UTC to match Shopify's API expectations
  */
 export function calculateDateRange(
   rangeType: DateRangeType,
@@ -39,72 +66,72 @@ export function calculateDateRange(
   switch (rangeType) {
     case "TODAY":
       return {
-        startDate: startOfDay(now),
-        endDate: endOfDay(now),
+        startDate: startOfDayUTC(now),
+        endDate: endOfDayUTC(now),
       };
 
     case "YESTERDAY":
       const yesterday = subDays(now, 1);
       return {
-        startDate: startOfDay(yesterday),
-        endDate: endOfDay(yesterday),
+        startDate: startOfDayUTC(yesterday),
+        endDate: endOfDayUTC(yesterday),
       };
 
     case "LAST_7_DAYS":
       return {
-        startDate: startOfDay(subDays(now, 6)),
-        endDate: endOfDay(now),
+        startDate: startOfDayUTC(subDays(now, 6)),
+        endDate: endOfDayUTC(now),
       };
 
     case "LAST_30_DAYS":
       return {
-        startDate: startOfDay(subDays(now, 29)),
-        endDate: endOfDay(now),
+        startDate: startOfDayUTC(subDays(now, 29)),
+        endDate: endOfDayUTC(now),
       };
 
     case "LAST_90_DAYS":
       return {
-        startDate: startOfDay(subDays(now, 89)),
-        endDate: endOfDay(now),
+        startDate: startOfDayUTC(subDays(now, 89)),
+        endDate: endOfDayUTC(now),
       };
 
     case "THIS_MONTH":
       return {
-        startDate: startOfMonth(now),
-        endDate: endOfDay(now),
+        startDate: startOfDayUTC(startOfMonth(now)),
+        endDate: endOfDayUTC(now),
       };
 
     case "LAST_MONTH":
       const lastMonth = subMonths(now, 1);
       return {
-        startDate: startOfMonth(lastMonth),
-        endDate: endOfMonth(lastMonth),
+        startDate: startOfDayUTC(startOfMonth(lastMonth)),
+        endDate: endOfDayUTC(endOfMonth(lastMonth)),
       };
 
     case "THIS_QUARTER":
       return {
-        startDate: startOfQuarter(now),
-        endDate: endOfDay(now),
+        startDate: startOfDayUTC(startOfQuarter(now)),
+        endDate: endOfDayUTC(now),
       };
 
     case "LAST_QUARTER":
       const lastQuarter = subQuarters(now, 1);
       return {
-        startDate: startOfQuarter(lastQuarter),
-        endDate: endOfQuarter(lastQuarter),
+        startDate: startOfDayUTC(startOfQuarter(lastQuarter)),
+        endDate: endOfDayUTC(endOfQuarter(lastQuarter)),
       };
 
     case "THIS_YEAR":
       return {
-        startDate: startOfYear(now),
-        endDate: endOfDay(now),
+        startDate: startOfDayUTC(startOfYear(now)),
+        endDate: endOfDayUTC(now),
       };
 
     case "LAST_YEAR":
       const lastYear = subYears(now, 1);
       return {
-        startDate: startOfYear(lastYear),
-        endDate: endOfYear(lastYear),
+        startDate: startOfDayUTC(startOfYear(lastYear)),
+        endDate: endOfDayUTC(endOfYear(lastYear)),
       };
 
     case "CUSTOM":
@@ -112,15 +139,15 @@ export function calculateDateRange(
         throw new Error("Custom date range requires startDate and endDate");
       }
       return {
-        startDate: startOfDay(customStart),
-        endDate: endOfDay(customEnd),
+        startDate: startOfDayUTC(customStart),
+        endDate: endOfDayUTC(customEnd),
       };
 
     default:
       // Default to last 30 days
       return {
-        startDate: startOfDay(subDays(now, 29)),
-        endDate: endOfDay(now),
+        startDate: startOfDayUTC(subDays(now, 29)),
+        endDate: endOfDayUTC(now),
       };
   }
 }

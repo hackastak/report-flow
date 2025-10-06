@@ -153,10 +153,14 @@ async function fetchSalesData(
 
   // Build query filter
   let queryFilter = `created_at:>='${startDate.toISOString()}' AND created_at:<='${endDate.toISOString()}'`;
-  
-  if (filters.salesChannel && filters.salesChannel.length > 0) {
-    const channels = filters.salesChannel.join(" OR ");
-    queryFilter += ` AND (${channels})`;
+
+  // Add sales channel filter if specified (and not "all")
+  if (filters.salesChannel && Array.isArray(filters.salesChannel) && filters.salesChannel.length > 0) {
+    // If "all" is selected, don't add any channel filter
+    if (!filters.salesChannel.includes("all")) {
+      const channels = filters.salesChannel.join(" OR ");
+      queryFilter += ` AND (${channels})`;
+    }
   }
 
   const allOrders: any[] = [];
@@ -733,19 +737,53 @@ async function fetchFinanceSummaryData(
   admin: any,
   filters: Record<string, any>
 ): Promise<FetchDataResult> {
+  const executionId = Math.random().toString(36).substring(7);
+  console.log(`\n========== [Finance Summary ${executionId}] START ==========`);
+  console.log(`[Finance Summary ${executionId}] Received filters:`, JSON.stringify(filters, null, 2));
+
   const { startDate, endDate } = calculateDateRange(
     filters.dateRange || "LAST_30_DAYS",
     filters.customStartDate,
     filters.customEndDate
   );
 
-  // Build query filter
-  let queryFilter = `created_at:>='${startDate.toISOString()}' AND created_at:<='${endDate.toISOString()}'`;
+  console.log(`[Finance Summary ${executionId}] After calculateDateRange:`);
+  console.log(`  startDate.toISOString() = ${startDate.toISOString()}`);
+  console.log(`  endDate.toISOString() = ${endDate.toISOString()}`);
 
-  if (filters.salesChannel && filters.salesChannel.length > 0) {
-    const channels = filters.salesChannel.join(" OR ");
-    queryFilter += ` AND (${channels})`;
+  // Build query filter - store in variables first
+  const startDateISO = startDate.toISOString();
+  const endDateISO = endDate.toISOString();
+
+  console.log(`[Finance Summary ${executionId}] After storing in variables:`);
+  console.log(`  startDateISO = ${startDateISO}`);
+  console.log(`  endDateISO = ${endDateISO}`);
+
+  // Build the query string
+  let queryFilter = `created_at:>='${startDateISO}' AND created_at:<='${endDateISO}'`;
+
+  console.log(`[Finance Summary ${executionId}] After building query:`);
+  console.log(`  queryFilter = ${queryFilter}`);
+
+  // Add sales channel filter if specified
+  // If "all" is selected, don't add any channel filter
+  if (filters.salesChannel && Array.isArray(filters.salesChannel) && filters.salesChannel.length > 0) {
+    // Check if "all" is in the array
+    if (filters.salesChannel.includes("all")) {
+      console.log(`[Finance Summary ${executionId}] "All Channels" selected - will fetch from ALL channels`);
+    } else {
+      // Only add filter if specific channels are selected (not "all")
+      const channels = filters.salesChannel.join(" OR ");
+      queryFilter += ` AND (${channels})`;
+      console.log(`[Finance Summary ${executionId}] Added sales channel filter: ${channels}`);
+    }
+  } else {
+    console.log(`[Finance Summary ${executionId}] No sales channel filter - will fetch from ALL channels`);
   }
+
+  console.log(`========== [Finance Summary ${executionId}] FINAL QUERY ==========`);
+  console.log(`  queryFilter = ${queryFilter}`);
+  console.log(`========================================================\n`);
 
   const allOrders: any[] = [];
   let hasNextPage = true;
@@ -754,6 +792,10 @@ async function fetchFinanceSummaryData(
   let pageCount = 0;
 
   while (hasNextPage && pageCount < maxPages) {
+    console.log(`[Finance Summary ${executionId}] About to execute GraphQL query with:`);
+    console.log(`  queryFilter = ${queryFilter}`);
+    console.log(`  cursor = ${cursor}`);
+
     const result = await executeGraphQLWithRetry(
       admin,
       `#graphql
@@ -832,7 +874,7 @@ async function fetchFinanceSummaryData(
                   }
                 }
               }
-              transactions(first: 250) {
+              transactions {
                 id
                 kind
                 status
@@ -874,10 +916,14 @@ async function fetchFinanceSummaryData(
     const orders = result.data.orders.edges.map((edge: any) => edge.node);
     allOrders.push(...orders);
 
+    console.log(`[Finance Summary ${executionId}] Page ${pageCount + 1}: Fetched ${orders.length} orders`);
+
     hasNextPage = result.data.orders.pageInfo.hasNextPage;
     cursor = result.data.orders.pageInfo.endCursor;
     pageCount++;
   }
+
+  console.log(`[Finance Summary ${executionId}] Total orders fetched: ${allOrders.length}`);
 
   return {
     success: true,

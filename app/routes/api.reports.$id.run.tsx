@@ -67,14 +67,19 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }
 
     // Execute report using the execution service
-    console.log("Manual report execution triggered:", {
-      reportId: report.id,
-      reportType: report.reportType,
-      recipientCount: report.recipients.length,
-    });
+    console.log("\n========== MANUAL REPORT EXECUTION TRIGGERED ==========");
+    console.log("Report ID:", report.id);
+    console.log("Report Type:", report.reportType);
+    console.log("Report Name:", report.name);
+    console.log("Shop:", session.shop);
+    console.log("Recipient Count:", report.recipients.length);
+    console.log("Filter Count:", report.filters.length);
+    console.log("Filters:", JSON.stringify(report.filters, null, 2));
+    console.log("=======================================================\n");
 
     // Ensure we have an access token
     if (!session.accessToken) {
+      console.error("ERROR: Missing access token!");
       return Response.json(
         {
           success: false,
@@ -87,17 +92,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
       );
     }
 
+    console.log("✅ Access token present, starting execution...");
+
     // Execute report asynchronously (don't wait for completion)
     executeReportManually(report.id, session.shop, session.accessToken)
       .then((result) => {
         if (result.success) {
-          console.log(`Report execution completed successfully: ${result.historyId}`);
+          console.log(`✅ Report execution completed successfully: ${result.historyId}`);
+          console.log(`   Records: ${result.recordCount}, Emails sent: ${result.emailsSent}`);
         } else {
-          console.error(`Report execution failed: ${result.error}`);
+          console.error(`❌ Report execution failed: ${result.error}`);
         }
       })
       .catch((error) => {
-        console.error("Report execution error:", error);
+        console.error("❌ Report execution error:", error);
+        console.error("Stack trace:", error instanceof Error ? error.stack : "No stack trace");
       });
 
     return Response.json({

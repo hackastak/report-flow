@@ -44,13 +44,19 @@ export async function executeReport(
 ): Promise<ExecuteReportResult> {
   const { reportScheduleId, shop, accessToken } = options;
 
+  console.log(`\n🚀 ========== [EXECUTE REPORT] START ==========`);
+  console.log(`Report Schedule ID: ${reportScheduleId}`);
+  console.log(`Shop: ${shop}`);
+  console.log(`Timestamp: ${new Date().toISOString()}`);
+  console.log(`================================================\n`);
+
   let historyId: string | null = null;
   let filePath: string | null = null;
   let reportSchedule: any = null; // Store for error notification
 
   try {
     // Step 1: Fetch report configuration
-    console.log(`[Report Execution] Starting report ${reportScheduleId}`);
+    console.log(`[Report Execution] Step 1: Fetching report configuration...`);
 
     reportSchedule = await prisma.reportSchedule.findUnique({
       where: { id: reportScheduleId },
@@ -99,6 +105,8 @@ export async function executeReport(
         filtersObj[filter.filterKey] = filter.filterValue;
       }
     });
+
+    console.log(`[Report Execution] Filters:`, JSON.stringify(filtersObj, null, 2));
 
     // Create admin GraphQL client using unauthenticated.admin
     // This is the correct way to create an admin client for background jobs in React Router apps
@@ -296,13 +304,37 @@ export async function executeReportManually(
   shop: string,
   accessToken: string
 ): Promise<ExecuteReportResult> {
-  console.log(`[Report Execution] Manual execution requested for ${reportScheduleId}`);
-  
-  return executeReport({
-    reportScheduleId,
-    shop,
-    accessToken,
-  });
+  console.log(`\n========== [MANUAL EXECUTION] START ==========`);
+  console.log(`Report Schedule ID: ${reportScheduleId}`);
+  console.log(`Shop: ${shop}`);
+  console.log(`Access Token: ${accessToken ? 'Present' : 'Missing'}`);
+  console.log(`==============================================\n`);
+
+  try {
+    const result = await executeReport({
+      reportScheduleId,
+      shop,
+      accessToken,
+    });
+
+    console.log(`\n========== [MANUAL EXECUTION] END ==========`);
+    console.log(`Success: ${result.success}`);
+    console.log(`History ID: ${result.historyId}`);
+    console.log(`Record Count: ${result.recordCount}`);
+    console.log(`Emails Sent: ${result.emailsSent}`);
+    if (result.error) {
+      console.log(`Error: ${result.error}`);
+    }
+    console.log(`============================================\n`);
+
+    return result;
+  } catch (error) {
+    console.error(`\n========== [MANUAL EXECUTION] ERROR ==========`);
+    console.error(`Error:`, error);
+    console.error(`Stack:`, error instanceof Error ? error.stack : 'No stack trace');
+    console.error(`==============================================\n`);
+    throw error;
+  }
 }
 
 /**
