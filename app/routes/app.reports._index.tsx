@@ -4,6 +4,7 @@ import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { getAllReportTypes } from "../config/reportTypes";
 import type { ReportTypeConfig } from "../config/reportTypes";
+import { getIcon } from "../utils/iconMapper";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticate.admin(request);
@@ -40,7 +41,7 @@ export default function ReportsIndex() {
 
       {/* Sales Reports */}
       {reportsByCategory.sales.length > 0 && (
-        <s-section heading="💰 Sales Reports">
+        <s-section heading="Sales Reports" >
           <s-stack direction="block" gap="base">
             {reportsByCategory.sales.map((report) => (
               <ReportCard
@@ -55,7 +56,7 @@ export default function ReportsIndex() {
 
       {/* Operations Reports */}
       {reportsByCategory.operations.length > 0 && (
-        <s-section heading="📦 Operations Reports">
+        <s-section heading="Operations Reports">
           <s-stack direction="block" gap="base">
             {reportsByCategory.operations.map((report) => (
               <ReportCard
@@ -70,7 +71,7 @@ export default function ReportsIndex() {
 
       {/* Marketing Reports */}
       {reportsByCategory.marketing.length > 0 && (
-        <s-section heading="🎯 Marketing Reports">
+        <s-section heading="Marketing Reports">
           <s-stack direction="block" gap="base">
             {reportsByCategory.marketing.map((report) => (
               <ReportCard
@@ -85,7 +86,7 @@ export default function ReportsIndex() {
 
       {/* Analytics Reports */}
       {reportsByCategory.analytics.length > 0 && (
-        <s-section heading="📈 Analytics Reports">
+        <s-section heading="Analytics Reports">
           <s-stack direction="block" gap="base">
             {reportsByCategory.analytics.map((report) => (
               <ReportCard
@@ -132,55 +133,140 @@ interface ReportCardProps {
 }
 
 function ReportCard({ report, onSelect }: ReportCardProps) {
+  // Get the icon component from the icon name string
+  const IconComponent = getIcon(report.icon);
+
   return (
-    <s-box
-      padding="base"
-      borderWidth="base"
-      borderRadius="base"
-      background="surface"
+    <div
+      role="button"
+      tabIndex={0}
       style={{
+        padding: "1rem",
+        border: "1px solid var(--s-color-border)",
+        borderRadius: "var(--s-border-radius-base)",
+        backgroundColor: "var(--s-color-surface)",
         cursor: "pointer",
         transition: "all 0.2s ease",
       }}
       onClick={() => onSelect(report.type)}
-      onMouseEnter={(e: any) => {
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(report.type);
+        }
+      }}
+      onMouseEnter={(e: React.MouseEvent<HTMLElement>) => {
         e.currentTarget.style.borderColor = "var(--s-color-border-emphasis)";
         e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
       }}
-      onMouseLeave={(e: any) => {
+      onMouseLeave={(e: React.MouseEvent<HTMLElement>) => {
         e.currentTarget.style.borderColor = "";
         e.currentTarget.style.boxShadow = "";
       }}
     >
-      <s-stack direction="inline" gap="base" alignment="start">
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "1rem",
+        }}
+      >
+        {/* Icon */}
         <div
           style={{
-            fontSize: "2rem",
-            lineHeight: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             minWidth: "2.5rem",
+            width: "2.5rem",
+            height: "2.5rem",
+            borderRadius: "var(--s-border-radius-base)",
+            backgroundColor: "var(--s-color-surface-subdued)",
+            color: "var(--s-color-text)",
+            flexShrink: 0,
           }}
         >
-          {report.icon}
+          <IconComponent size={24} strokeWidth={2} />
         </div>
-        <s-stack direction="block" gap="tight" style={{ flex: 1 }}>
-          <s-heading level={3}>{report.name}</s-heading>
-          <s-text variant="subdued">{report.description}</s-text>
-          <s-stack direction="inline" gap="tight" style={{ marginTop: "0.5rem" }}>
-            <s-badge variant="info">
-              {report.filters.length} filter
-              {report.filters.length !== 1 ? "s" : ""}
-            </s-badge>
-            <s-badge variant="success">
-              {report.dataFields.length} field
-              {report.dataFields.length !== 1 ? "s" : ""}
-            </s-badge>
-          </s-stack>
-        </s-stack>
-        <s-button variant="tertiary" onClick={() => onSelect(report.type)}>
-          Select
-        </s-button>
-      </s-stack>
-    </s-box>
+
+        {/* Content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <h3 style={{
+              margin: 0,
+              fontSize: "1.125rem",
+              fontWeight: 600,
+              color: "var(--s-color-text)"
+            }}>
+              {report.name}
+            </h3>
+            <p style={{
+              margin: 0,
+              fontSize: "0.875rem",
+              color: "var(--s-color-text-subdued)",
+              lineHeight: 1.5
+            }}>
+              {report.description}
+            </p>
+            <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.25rem" }}>
+              <span style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "0.125rem 0.5rem",
+                fontSize: "0.75rem",
+                fontWeight: 500,
+                borderRadius: "var(--s-border-radius-base)",
+                backgroundColor: "var(--s-color-bg-info)",
+                color: "var(--s-color-text-info)",
+              }}>
+                {report.filters.length} filter{report.filters.length !== 1 ? "s" : ""}
+              </span>
+              <span style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "0.125rem 0.5rem",
+                fontSize: "0.75rem",
+                fontWeight: 500,
+                borderRadius: "var(--s-border-radius-base)",
+                backgroundColor: "var(--s-color-bg-success)",
+                color: "var(--s-color-text-success)",
+              }}>
+                {report.dataFields.length} field{report.dataFields.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Button */}
+        <div style={{ flexShrink: 0, marginLeft: "auto" }}>
+          <button
+            style={{
+              padding: "0.5rem 1rem",
+              fontSize: "0.875rem",
+              fontWeight: 500,
+              color: "var(--s-color-text)",
+              backgroundColor: "transparent",
+              border: "1px solid var(--s-color-border)",
+              borderRadius: "var(--s-border-radius-base)",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(report.type);
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--s-color-surface-subdued)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            Select
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -1,10 +1,22 @@
 /**
  * Onboarding Modal Component
- * 
+ *
  * Displays a welcome modal for first-time users
  */
 
 import { useState } from "react";
+import {
+  BarChart3,
+  TrendingUp,
+  Clock,
+  Search,
+  Mail,
+  FileText,
+  Calendar,
+  CalendarDays,
+  CalendarRange,
+  Sparkles
+} from "lucide-react";
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -19,7 +31,7 @@ export function OnboardingModal({ isOpen, onClose, onGetStarted }: OnboardingMod
 
   const steps = [
     {
-      title: "Welcome to Report Flow! 🎉",
+      title: "Welcome to Report Flow!",
       content: (
         <>
           <s-paragraph>
@@ -30,7 +42,7 @@ export function OnboardingModal({ isOpen, onClose, onGetStarted }: OnboardingMod
           </s-paragraph>
         </>
       ),
-      icon: "📊",
+      icon: Sparkles,
     },
     {
       title: "7 Powerful Report Types",
@@ -47,7 +59,7 @@ export function OnboardingModal({ isOpen, onClose, onGetStarted }: OnboardingMod
           </s-unordered-list>
         </>
       ),
-      icon: "📈",
+      icon: TrendingUp,
     },
     {
       title: "Flexible Scheduling",
@@ -57,7 +69,15 @@ export function OnboardingModal({ isOpen, onClose, onGetStarted }: OnboardingMod
           <s-stack direction="block" gap="base">
             <s-box padding="base" borderWidth="base" borderRadius="base" background="surface">
               <s-stack direction="inline" gap="base" alignment="start">
-                <div style={{ fontSize: "2rem", lineHeight: 1 }}>📅</div>
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: "2rem",
+                  color: "var(--s-color-text)"
+                }}>
+                  <Calendar size={28} strokeWidth={2} />
+                </div>
                 <s-stack direction="block" gap="tight">
                   <s-text weight="bold">Daily Reports</s-text>
                   <s-text variant="subdued">Get fresh data every morning</s-text>
@@ -66,7 +86,15 @@ export function OnboardingModal({ isOpen, onClose, onGetStarted }: OnboardingMod
             </s-box>
             <s-box padding="base" borderWidth="base" borderRadius="base" background="surface">
               <s-stack direction="inline" gap="base" alignment="start">
-                <div style={{ fontSize: "2rem", lineHeight: 1 }}>📆</div>
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: "2rem",
+                  color: "var(--s-color-text)"
+                }}>
+                  <CalendarDays size={28} strokeWidth={2} />
+                </div>
                 <s-stack direction="block" gap="tight">
                   <s-text weight="bold">Weekly Reports</s-text>
                   <s-text variant="subdued">Perfect for team meetings</s-text>
@@ -75,7 +103,15 @@ export function OnboardingModal({ isOpen, onClose, onGetStarted }: OnboardingMod
             </s-box>
             <s-box padding="base" borderWidth="base" borderRadius="base" background="surface">
               <s-stack direction="inline" gap="base" alignment="start">
-                <div style={{ fontSize: "2rem", lineHeight: 1 }}>🗓️</div>
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: "2rem",
+                  color: "var(--s-color-text)"
+                }}>
+                  <CalendarRange size={28} strokeWidth={2} />
+                </div>
                 <s-stack direction="block" gap="tight">
                   <s-text weight="bold">Monthly Reports</s-text>
                   <s-text variant="subdued">Great for executive summaries</s-text>
@@ -85,7 +121,7 @@ export function OnboardingModal({ isOpen, onClose, onGetStarted }: OnboardingMod
           </s-stack>
         </>
       ),
-      icon: "⏰",
+      icon: Clock,
     },
     {
       title: "Powerful Features",
@@ -95,7 +131,15 @@ export function OnboardingModal({ isOpen, onClose, onGetStarted }: OnboardingMod
           <s-stack direction="block" gap="base">
             <s-box padding="base" borderWidth="base" borderRadius="base" background="surface">
               <s-stack direction="inline" gap="base" alignment="start">
-                <div style={{ fontSize: "2rem", lineHeight: 1 }}>🔍</div>
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: "2rem",
+                  color: "var(--s-color-text)"
+                }}>
+                  <Search size={28} strokeWidth={2} />
+                </div>
                 <s-stack direction="block" gap="tight">
                   <s-text weight="bold">Custom Filters</s-text>
                   <s-text variant="subdued">Date ranges, product types, order status, and more</s-text>
@@ -104,25 +148,15 @@ export function OnboardingModal({ isOpen, onClose, onGetStarted }: OnboardingMod
             </s-box>
             <s-box padding="base" borderWidth="base" borderRadius="base" background="surface">
               <s-stack direction="inline" gap="base" alignment="start">
-                <div style={{ fontSize: "2rem", lineHeight: 1 }}>👥</div>
-                <s-stack direction="block" gap="tight">
-                  <s-text weight="bold">Multiple Recipients</s-text>
-                  <s-text variant="subdued">Send reports to your entire team</s-text>
-                </s-stack>
-              </s-stack>
-            </s-box>
-            <s-box padding="base" borderWidth="base" borderRadius="base" background="surface">
-              <s-stack direction="inline" gap="base" alignment="start">
-                <div style={{ fontSize: "2rem", lineHeight: 1 }}>👁️</div>
-                <s-stack direction="block" gap="tight">
-                  <s-text weight="bold">Preview Reports</s-text>
-                  <s-text variant="subdued">See sample data before scheduling</s-text>
-                </s-stack>
-              </s-stack>
-            </s-box>
-            <s-box padding="base" borderWidth="base" borderRadius="base" background="surface">
-              <s-stack direction="inline" gap="base" alignment="start">
-                <div style={{ fontSize: "2rem", lineHeight: 1 }}>📧</div>
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: "2rem",
+                  color: "var(--s-color-text)"
+                }}>
+                  <Mail size={28} strokeWidth={2} />
+                </div>
                 <s-stack direction="block" gap="tight">
                   <s-text weight="bold">Email Delivery</s-text>
                   <s-text variant="subdued">CSV files delivered right to your inbox</s-text>
@@ -131,7 +165,32 @@ export function OnboardingModal({ isOpen, onClose, onGetStarted }: OnboardingMod
             </s-box>
             <s-box padding="base" borderWidth="base" borderRadius="base" background="surface">
               <s-stack direction="inline" gap="base" alignment="start">
-                <div style={{ fontSize: "2rem", lineHeight: 1 }}>📊</div>
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: "2rem",
+                  color: "var(--s-color-text)"
+                }}>
+                  <FileText size={28} strokeWidth={2} />
+                </div>
+                <s-stack direction="block" gap="tight">
+                  <s-text weight="bold">CSV Export</s-text>
+                  <s-text variant="subdued">Professional formatted reports ready to analyze</s-text>
+                </s-stack>
+              </s-stack>
+            </s-box>
+            <s-box padding="base" borderWidth="base" borderRadius="base" background="surface">
+              <s-stack direction="inline" gap="base" alignment="start">
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: "2rem",
+                  color: "var(--s-color-text)"
+                }}>
+                  <BarChart3 size={28} strokeWidth={2} />
+                </div>
                 <s-stack direction="block" gap="tight">
                   <s-text weight="bold">Execution History</s-text>
                   <s-text variant="subdued">Track when reports were sent and their status</s-text>
@@ -141,7 +200,7 @@ export function OnboardingModal({ isOpen, onClose, onGetStarted }: OnboardingMod
           </s-stack>
         </>
       ),
-      icon: "✨",
+      icon: Sparkles,
     },
     {
       title: "Ready to Get Started?",
@@ -261,8 +320,17 @@ export function OnboardingModal({ isOpen, onClose, onGetStarted }: OnboardingMod
             textAlign: "center",
           }}
         >
-          <div style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>
-            {currentStepData.icon}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: "0.5rem",
+            color: "var(--s-color-text)"
+          }}>
+            {(() => {
+              const IconComponent = currentStepData.icon;
+              return <IconComponent size={48} strokeWidth={2} />;
+            })()}
           </div>
           <s-heading level={2}>{currentStepData.title}</s-heading>
         </div>

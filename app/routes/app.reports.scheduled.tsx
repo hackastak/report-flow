@@ -1,6 +1,6 @@
 /**
  * Scheduled Reports List Page
- * 
+ *
  * Displays all scheduled reports in a table with actions
  */
 
@@ -11,6 +11,8 @@ import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { REPORT_TYPES } from "../config/reportTypes";
 import { prisma } from "../db.server";
+import { getIcon } from "../utils/iconMapper";
+import { BarChart3 } from "lucide-react";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
@@ -52,9 +54,10 @@ export const headers: HeadersFunction = (headersArgs) => {
 };
 
 // Helper function to get report type icon
-function getReportIcon(reportType: string): string {
+function getReportIcon(reportType: string) {
   const config = REPORT_TYPES[reportType as keyof typeof REPORT_TYPES];
-  return config?.icon || "📊";
+  const iconName = config?.icon || "BarChart3";
+  return getIcon(iconName);
 }
 
 // Helper function to get report type name
@@ -265,9 +268,23 @@ export default function ScheduledReports() {
                     </td>
                     <td style={{ padding: "0.75rem" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <span style={{ fontSize: "1.25rem" }}>
-                          {getReportIcon(report.reportType)}
-                        </span>
+                        {(() => {
+                          const IconComponent = getReportIcon(report.reportType);
+                          return (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: "1.5rem",
+                                height: "1.5rem",
+                                color: "var(--s-color-text-subdued)",
+                              }}
+                            >
+                              <IconComponent size={20} strokeWidth={2} />
+                            </div>
+                          );
+                        })()}
                         <s-text>{getReportName(report.reportType)}</s-text>
                       </div>
                     </td>

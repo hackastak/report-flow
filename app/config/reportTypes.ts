@@ -1,6 +1,6 @@
 /**
  * Report Types Configuration
- * 
+ *
  * Defines all available report types, their filters, data fields,
  * and metadata for the Report Flow app.
  */
@@ -63,7 +63,7 @@ export interface ReportTypeConfig {
   type: ReportType;
   name: string;
   description: string;
-  icon: string;
+  icon: string; // Icon name as string for serialization
   category: "sales" | "operations" | "marketing" | "analytics";
   filters: FilterOption[];
   dataFields: DataField[];
@@ -137,7 +137,7 @@ export const REPORT_TYPES: Record<ReportType, ReportTypeConfig> = {
     type: "SALES",
     name: "Sales Report",
     description: "Analyze sales performance, revenue, and trends over time",
-    icon: "💰",
+    icon: "DollarSign",
     category: "sales",
     filters: [
       {
@@ -187,7 +187,7 @@ export const REPORT_TYPES: Record<ReportType, ReportTypeConfig> = {
     type: "ORDERS",
     name: "Orders Report",
     description: "Track order details, status, and fulfillment information",
-    icon: "📦",
+    icon: "Package",
     category: "operations",
     filters: [
       {
@@ -237,7 +237,7 @@ export const REPORT_TYPES: Record<ReportType, ReportTypeConfig> = {
     type: "PRODUCTS",
     name: "Products Report",
     description: "View product performance, sales, and inventory metrics",
-    icon: "🛍️",
+    icon: "ShoppingBag",
     category: "sales",
     filters: [
       {
@@ -286,7 +286,7 @@ export const REPORT_TYPES: Record<ReportType, ReportTypeConfig> = {
     type: "CUSTOMERS",
     name: "Customers Report",
     description: "Analyze customer behavior, lifetime value, and segmentation",
-    icon: "👥",
+    icon: "Users",
     category: "analytics",
     filters: [
       {
@@ -325,7 +325,7 @@ export const REPORT_TYPES: Record<ReportType, ReportTypeConfig> = {
     type: "INVENTORY",
     name: "Inventory Report",
     description: "Monitor stock levels, inventory value, and product availability",
-    icon: "📊",
+    icon: "BarChart3",
     category: "operations",
     filters: [
       {
@@ -378,7 +378,7 @@ export const REPORT_TYPES: Record<ReportType, ReportTypeConfig> = {
     type: "TRAFFIC",
     name: "Traffic Report",
     description: "Track website traffic, sessions, and conversion metrics",
-    icon: "📈",
+    icon: "TrendingUp",
     category: "analytics",
     filters: [
       {
@@ -420,7 +420,7 @@ export const REPORT_TYPES: Record<ReportType, ReportTypeConfig> = {
     type: "DISCOUNTS",
     name: "Discounts Report",
     description: "Analyze discount code usage, performance, and ROI",
-    icon: "🎯",
+    icon: "Tag",
     category: "marketing",
     filters: [
       {
@@ -476,7 +476,7 @@ export const REPORT_TYPES: Record<ReportType, ReportTypeConfig> = {
     type: "FINANCE_SUMMARY",
     name: "Finance Summary",
     description: "Comprehensive financial report with sales breakdown, gross profit, payments, and gift cards",
-    icon: "💵",
+    icon: "Receipt",
     category: "sales",
     filters: [
       {
@@ -534,7 +534,7 @@ export const REPORT_TYPES: Record<ReportType, ReportTypeConfig> = {
     type: "CUSTOM",
     name: "Custom Report",
     description: "Create your own custom report with any fields available from the Shopify API",
-    icon: "⚙️",
+    icon: "Settings",
     category: "analytics",
     filters: [
       {
