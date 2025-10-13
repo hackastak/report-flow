@@ -147,6 +147,7 @@ function ReportCard({ report, onSelect }: ReportCardProps) {
         backgroundColor: "var(--s-color-surface)",
         cursor: "pointer",
         transition: "all 0.2s ease",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
       }}
       onClick={() => onSelect(report.type)}
       onKeyDown={(e) => {
@@ -157,11 +158,11 @@ function ReportCard({ report, onSelect }: ReportCardProps) {
       }}
       onMouseEnter={(e: React.MouseEvent<HTMLElement>) => {
         e.currentTarget.style.borderColor = "var(--s-color-border-emphasis)";
-        e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
       }}
       onMouseLeave={(e: React.MouseEvent<HTMLElement>) => {
         e.currentTarget.style.borderColor = "";
-        e.currentTarget.style.boxShadow = "";
+        e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.08)";
       }}
     >
       <div
@@ -235,35 +236,6 @@ function ReportCard({ report, onSelect }: ReportCardProps) {
               </span>
             </div>
           </div>
-        </div>
-
-        {/* Button */}
-        <div style={{ flexShrink: 0, marginLeft: "auto" }}>
-          <button
-            style={{
-              padding: "0.5rem 1rem",
-              fontSize: "0.875rem",
-              fontWeight: 500,
-              color: "var(--s-color-text)",
-              backgroundColor: "transparent",
-              border: "1px solid var(--s-color-border)",
-              borderRadius: "var(--s-border-radius-base)",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect(report.type);
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "var(--s-color-surface-subdued)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-            }}
-          >
-            Select
-          </button>
         </div>
       </div>
     </div>

@@ -20,6 +20,7 @@ import {
 } from "../components/FieldSelectionForm";
 import { CustomFieldSelectionForm } from "../components/CustomFieldSelectionForm";
 import type { DataSource } from "../config/customReportFields";
+import { getIcon } from "../utils/iconMapper";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticate.admin(request);
@@ -40,6 +41,9 @@ export default function NewReport() {
   const { reportConfig } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  // Get the icon component from the icon name string
+  const IconComponent = getIcon(reportConfig.icon);
 
   // Form state
   const [reportName, setReportName] = useState("");
@@ -202,8 +206,21 @@ export default function NewReport() {
             background="surface"
           >
             <s-stack direction="inline" gap="base" alignment="start">
-              <div style={{ fontSize: "2rem", lineHeight: 1 }}>
-                {reportConfig.icon}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: "2.5rem",
+                  width: "2.5rem",
+                  height: "2.5rem",
+                  borderRadius: "var(--s-border-radius-base)",
+                  backgroundColor: "var(--s-color-surface-subdued)",
+                  color: "var(--s-color-text)",
+                  flexShrink: 0,
+                }}
+              >
+                <IconComponent size={24} strokeWidth={2} />
               </div>
               <s-stack direction="block" gap="tight">
                 <s-heading level={3}>{reportConfig.name}</s-heading>
