@@ -2,12 +2,11 @@
 
 client_id = "a3ec7d7dc5c2359c2b0ce9dc4c06ce0a"
 name = "report-flow"
-application_url = "https://example.com"
+application_url = "https://report-flow-production.up.railway.app"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
-include_config_on_deploy = true
 
 [webhooks]
 api_version = "2025-10"
@@ -26,4 +25,4 @@ api_version = "2025-10"
 scopes = "read_orders,read_products,read_customers,read_reports,read_analytics,read_inventory,read_locations,read_price_rules,read_discounts"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ "https://report-flow-production.up.railway.app/auth/callback" ]
