@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { LoaderFunctionArgs } from "react-router";
 import { useLoaderData, useNavigate, useParams } from "react-router";
 import { authenticate } from "../shopify.server";
-import { getReportTypeConfig } from "../config/reportTypes";
+import { prisma } from "../db.server";
+import { getReportTypeConfig, type ReportType } from "../config/reportTypes";
 import { FilterConfigurationForm } from "../components/FilterConfigurationForm";
 import {
   ScheduleConfigurationForm,
@@ -19,7 +20,7 @@ import {
 } from "../components/FieldSelectionForm";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
 
   const { id } = params;
 
@@ -27,20 +28,73 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     throw new Response("Report ID is required", { status: 400 });
   }
 
-  // Fetch the existing report
-  const response = await fetch(`${new URL(request.url).origin}/api/reports/${id}`, {
-    headers: request.headers,
+  // Fetch the existing report directly from database
+  const report = await prisma.reportSchedule.findFirst({
+    where: {
+      id,
+      shop: session.shop,
+    },
+    include: {
+      recipients: true,
+      filters: true,
+      fields: {
+        orderBy: {
+          fieldOrder: 'asc',
+        },
+      },
+    },
   });
 
-  const data = await response.json();
-
-  if (!data.success) {
-    throw new Response(data.error?.message || "Report not found", { status: 404 });
+  if (!report) {
+    throw new Response("Report not found", { status: 404 });
   }
 
-  const reportConfig = getReportTypeConfig(data.report.reportType);
+  // Transform filters from database format
+  const filters: Record<string, any> = {};
+  report.filters.forEach((filter) => {
+    try {
+      filters[filter.filterKey] = JSON.parse(filter.filterValue);
+    } catch (e) {
+      filters[filter.filterKey] = filter.filterValue;
+    }
+  });
 
-  return { report: data.report, reportConfig };
+  // Transform fields from database format
+  const selectedFields = report.fields?.map((field: any) => ({
+    key: field.fieldKey,
+    order: field.fieldOrder,
+  })) || [];
+
+  // Validate frequency type - cast from database string to typed value
+  const validFrequencies: readonly string[] = ["DAILY", "WEEKLY", "MONTHLY", "CUSTOM"];
+  const frequency = validFrequencies.includes(report.frequency)
+    ? (report.frequency as ScheduleConfig["frequency"])
+    : "DAILY";
+
+  // Transform report data for the component
+  const reportData = {
+    id: report.id,
+    name: report.name,
+    description: report.description,
+    reportType: report.reportType,
+    frequency: frequency,
+    timeOfDay: report.timeOfDay,
+    dayOfWeek: report.dayOfWeek ?? undefined,
+    dayOfMonth: report.dayOfMonth ?? undefined,
+    timezone: report.timezone,
+    isActive: report.isActive,
+    filters: filters,
+    recipients: report.recipients.map((r) => ({
+      email: r.email,
+      name: r.name ?? undefined,
+    })),
+    selectedFields: selectedFields,
+  };
+
+  // Cast reportType from database string to ReportType enum
+  const reportConfig = getReportTypeConfig(report.reportType as ReportType);
+
+  return { report: reportData, reportConfig };
 };
 
 export default function EditReport() {
