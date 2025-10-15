@@ -112,15 +112,27 @@ export async function executeReport(
     console.log(`[Report Execution] Creating authenticated admin client for shop: ${shop}`);
 
     // Load the offline session from storage
-    const session = await shopify.sessionStorage.loadSession(`offline_${shop}`);
+    const sessionId = `offline_${shop}`;
+    console.log(`[Report Execution] Loading session with ID: ${sessionId}`);
 
-    if (!session || !session.accessToken) {
-      throw new Error(`No valid session found for shop: ${shop}. Please reinstall the app.`);
+    const session = await shopify.sessionStorage.loadSession(sessionId);
+
+    if (!session) {
+      throw new Error(`No session found for shop: ${shop}. Session ID tried: ${sessionId}. Please reinstall the app.`);
+    }
+
+    if (!session.accessToken) {
+      throw new Error(`Session found but no access token for shop: ${shop}. Please reinstall the app.`);
     }
 
     console.log(`[Report Execution] Session loaded successfully`);
-    console.log(`[Report Execution] Access token present: ${!!session.accessToken}`);
+    console.log(`[Report Execution] Session ID: ${session.id}`);
     console.log(`[Report Execution] Session shop: ${session.shop}`);
+    console.log(`[Report Execution] Session isOnline: ${session.isOnline}`);
+    console.log(`[Report Execution] Access token present: ${!!session.accessToken}`);
+    console.log(`[Report Execution] Access token length: ${session.accessToken?.length}`);
+    console.log(`[Report Execution] Access token prefix: ${session.accessToken?.substring(0, 10)}...`);
+    console.log(`[Report Execution] API Version: ${apiVersion}`);
 
     // Create a custom admin client that uses the access token directly
     // This is a workaround for background jobs where unauthenticated.admin() doesn't work properly
@@ -129,6 +141,7 @@ export async function executeReport(
         const url = `https://${shop}/admin/api/${apiVersion}/graphql.json`;
 
         console.log(`[Report Execution] Making GraphQL request to: ${url}`);
+        console.log(`[Report Execution] Using access token: ${session.accessToken.substring(0, 10)}...`);
 
         const response = await fetch(url, {
           method: "POST",
