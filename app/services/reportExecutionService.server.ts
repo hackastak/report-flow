@@ -109,31 +109,37 @@ export async function executeReport(
     console.log(`[Report Execution] Filters:`, JSON.stringify(filtersObj, null, 2));
 
     // Create authenticated admin GraphQL client for background jobs
-    // We need to use the stored access token to authenticate API requests
+    // unauthenticated.admin() loads the offline session from storage automatically
     console.log(`[Report Execution] Creating authenticated admin client for shop: ${shop}`);
-    console.log(`[Report Execution] Access token present: ${!!accessToken}`);
 
-    // Load the session to get a properly authenticated admin client
-    const session = await shopify.sessionStorage.loadSession(`offline_${shop}`);
+    try {
+      // This automatically loads the offline session from Prisma storage
+      // and creates an authenticated admin client
+      const { admin, session } = await shopify.unauthenticated.admin(shop);
 
-    if (!session || !session.accessToken) {
-      throw new Error(`No valid session found for shop: ${shop}. Please reinstall the app.`);
+      console.log(`[Report Execution] Session loaded: ${!!session}`);
+      console.log(`[Report Execution] Access token present: ${!!session?.accessToken}`);
+      console.log(`[Report Execution] Session shop: ${session?.shop}`);
+
+      if (!session || !session.accessToken) {
+        throw new Error(`No valid session found for shop: ${shop}. Please reinstall the app.`);
+      }
+
+      const fetchResult = await fetchShopifyData({
+        reportType: reportSchedule.reportType as ReportType,
+        filters: filtersObj,
+        admin,
+      });
+
+      if (!fetchResult.success) {
+        throw new Error(`Data fetch failed: ${fetchResult.error}`);
+      }
+
+      console.log(`[Report Execution] Fetched ${fetchResult.recordCount} records`);
+    } catch (error) {
+      console.error(`[Report Execution] Error creating admin client or fetching data:`, error);
+      throw error;
     }
-
-    // Create authenticated admin client using the session
-    const admin = new shopify.clients.Graphql({ session });
-
-    const fetchResult = await fetchShopifyData({
-      reportType: reportSchedule.reportType as ReportType,
-      filters: filtersObj,
-      admin,
-    });
-
-    if (!fetchResult.success) {
-      throw new Error(`Data fetch failed: ${fetchResult.error}`);
-    }
-
-    console.log(`[Report Execution] Fetched ${fetchResult.recordCount} records`);
 
     // Step 3: Process and format data
     console.log(`[Report Execution] Processing data...`);
