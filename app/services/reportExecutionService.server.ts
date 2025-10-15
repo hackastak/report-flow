@@ -108,9 +108,20 @@ export async function executeReport(
 
     console.log(`[Report Execution] Filters:`, JSON.stringify(filtersObj, null, 2));
 
-    // Create admin GraphQL client using unauthenticated.admin
-    // This is the correct way to create an admin client for background jobs in React Router apps
-    const { admin } = await shopify.unauthenticated.admin(shop);
+    // Create authenticated admin GraphQL client for background jobs
+    // We need to use the stored access token to authenticate API requests
+    console.log(`[Report Execution] Creating authenticated admin client for shop: ${shop}`);
+    console.log(`[Report Execution] Access token present: ${!!accessToken}`);
+
+    // Load the session to get a properly authenticated admin client
+    const session = await shopify.sessionStorage.loadSession(`offline_${shop}`);
+
+    if (!session || !session.accessToken) {
+      throw new Error(`No valid session found for shop: ${shop}. Please reinstall the app.`);
+    }
+
+    // Create authenticated admin client using the session
+    const admin = new shopify.clients.Graphql({ session });
 
     const fetchResult = await fetchShopifyData({
       reportType: reportSchedule.reportType as ReportType,
