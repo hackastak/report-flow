@@ -108,46 +108,55 @@ export async function executeReport(
 
     console.log(`[Report Execution] Filters:`, JSON.stringify(filtersObj, null, 2));
 
-    // Create authenticated admin GraphQL client for background jobs
+    // Create authenticated admin GraphQL client
     console.log(`[Report Execution] Creating authenticated admin client for shop: ${shop}`);
 
-    // Load the offline session from storage
-    const sessionId = `offline_${shop}`;
-    console.log(`[Report Execution] Loading session with ID: ${sessionId}`);
+    // Use the passed accessToken parameter (from online session for manual runs, or offline session for scheduled runs)
+    let tokenToUse = accessToken;
 
-    const session = await shopify.sessionStorage.loadSession(sessionId);
+    // If no access token was passed, try to load the offline session (for background scheduled jobs)
+    if (!tokenToUse) {
+      console.log(`[Report Execution] No access token passed, loading offline session...`);
+      const sessionId = `offline_${shop}`;
+      console.log(`[Report Execution] Loading session with ID: ${sessionId}`);
 
-    if (!session) {
-      throw new Error(`No session found for shop: ${shop}. Session ID tried: ${sessionId}. Please reinstall the app.`);
+      const session = await shopify.sessionStorage.loadSession(sessionId);
+
+      if (!session) {
+        throw new Error(`No session found for shop: ${shop}. Session ID tried: ${sessionId}. Please reinstall the app.`);
+      }
+
+      if (!session.accessToken) {
+        throw new Error(`Session found but no access token for shop: ${shop}. Please reinstall the app.`);
+      }
+
+      tokenToUse = session.accessToken;
+      console.log(`[Report Execution] Offline session loaded successfully`);
+      console.log(`[Report Execution] Session ID: ${session.id}`);
+      console.log(`[Report Execution] Session shop: ${session.shop}`);
+      console.log(`[Report Execution] Session isOnline: ${session.isOnline}`);
+    } else {
+      console.log(`[Report Execution] Using passed access token (online session)`);
     }
 
-    if (!session.accessToken) {
-      throw new Error(`Session found but no access token for shop: ${shop}. Please reinstall the app.`);
-    }
-
-    console.log(`[Report Execution] Session loaded successfully`);
-    console.log(`[Report Execution] Session ID: ${session.id}`);
-    console.log(`[Report Execution] Session shop: ${session.shop}`);
-    console.log(`[Report Execution] Session isOnline: ${session.isOnline}`);
-    console.log(`[Report Execution] Access token present: ${!!session.accessToken}`);
-    console.log(`[Report Execution] Access token length: ${session.accessToken?.length}`);
-    console.log(`[Report Execution] Access token prefix: ${session.accessToken?.substring(0, 10)}...`);
+    console.log(`[Report Execution] Access token present: ${!!tokenToUse}`);
+    console.log(`[Report Execution] Access token length: ${tokenToUse?.length}`);
+    console.log(`[Report Execution] Access token prefix: ${tokenToUse?.substring(0, 10)}...`);
     console.log(`[Report Execution] API Version: ${apiVersion}`);
 
     // Create a custom admin client that uses the access token directly
-    // This is a workaround for background jobs where unauthenticated.admin() doesn't work properly
     const admin = {
       graphql: async (query: string, options?: { variables?: any }) => {
         const url = `https://${shop}/admin/api/${apiVersion}/graphql.json`;
 
         console.log(`[Report Execution] Making GraphQL request to: ${url}`);
-        console.log(`[Report Execution] Using access token: ${session.accessToken.substring(0, 10)}...`);
+        console.log(`[Report Execution] Using access token: ${tokenToUse.substring(0, 10)}...`);
 
         const response = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Shopify-Access-Token": session.accessToken,
+            "X-Shopify-Access-Token": tokenToUse,
           },
           body: JSON.stringify({
             query,
