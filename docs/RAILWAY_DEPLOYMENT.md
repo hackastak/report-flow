@@ -41,19 +41,19 @@ In your Railway project dashboard:
 
 ```bash
 # Shopify Configuration
-SHOPIFY_API_KEY=a3ec7d7dc5c2359c2b0ce9dc4c06ce0a
-SHOPIFY_API_SECRET=530eeac793dd7adc46384d8489465fae
+SHOPIFY_API_KEY=your-shopify-api-key-here
+SHOPIFY_API_SECRET=your-shopify-api-secret-here
 SCOPES=read_orders,read_products,read_customers,read_reports,read_analytics,read_inventory,read_locations,read_price_rules,read_discounts
 
 # Database (Neon PostgreSQL)
-DATABASE_URL=postgresql://neondb_owner:npg_C0oOuMlg4dsw@ep-raspy-mud-ad74aw2b-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+DATABASE_URL=postgresql://username:password@your-host.neon.tech/database?sslmode=require
 
-# SMTP Configuration (SMTP2Go)
-SMTP_HOST=mail.smtp2go.com
+# SMTP Configuration
+SMTP_HOST=your-smtp-host.com
 SMTP_PORT=2525
-SMTP_USER=report.flow@smilestacklabs.com
-SMTP_PASSWORD=yesuApzMNdGbo5AK
-SMTP_FROM=report.flow@smilestacklabs.com
+SMTP_USER=your-smtp-username
+SMTP_PASSWORD=your-smtp-password
+SMTP_FROM=your-email@example.com
 SMTP_FROM_NAME=Report Flow
 
 # Node Environment
