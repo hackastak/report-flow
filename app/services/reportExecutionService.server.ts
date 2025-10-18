@@ -131,6 +131,8 @@ export async function executeReport(
     console.log(`[Report Execution] Session ID: ${session.id}`);
     console.log(`[Report Execution] Session shop: ${session.shop}`);
     console.log(`[Report Execution] Session isOnline: ${session.isOnline}`);
+    console.log(`[Report Execution] Session scope: ${session.scope}`);
+    console.log(`[Report Execution] Session expires: ${session.expires}`);
     console.log(`[Report Execution] Access token present: ${!!tokenToUse}`);
     console.log(`[Report Execution] Access token length: ${tokenToUse?.length}`);
     console.log(`[Report Execution] Access token prefix: ${tokenToUse?.substring(0, 10)}...`);
