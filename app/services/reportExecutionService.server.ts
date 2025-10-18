@@ -25,7 +25,6 @@ import shopify, { apiVersion } from "../shopify.server";
 export interface ExecuteReportOptions {
   reportScheduleId: string;
   shop: string;
-  accessToken: string;
 }
 
 export interface ExecuteReportResult {
@@ -42,7 +41,7 @@ export interface ExecuteReportResult {
 export async function executeReport(
   options: ExecuteReportOptions
 ): Promise<ExecuteReportResult> {
-  const { reportScheduleId, shop, accessToken } = options;
+  const { reportScheduleId, shop } = options;
 
   console.log(`\n🚀 ========== [EXECUTE REPORT] START ==========`);
   console.log(`Report Schedule ID: ${reportScheduleId}`);
@@ -111,34 +110,27 @@ export async function executeReport(
     // Create authenticated admin GraphQL client
     console.log(`[Report Execution] Creating authenticated admin client for shop: ${shop}`);
 
-    // Use the passed accessToken parameter (from online session for manual runs, or offline session for scheduled runs)
-    let tokenToUse = accessToken;
+    // ALWAYS use offline session token for API requests (even for manual runs)
+    // Online tokens from authenticate.admin() are not suitable for background API calls
+    console.log(`[Report Execution] Loading offline session for API access...`);
+    const sessionId = `offline_${shop}`;
+    console.log(`[Report Execution] Loading session with ID: ${sessionId}`);
 
-    // If no access token was passed, try to load the offline session (for background scheduled jobs)
-    if (!tokenToUse) {
-      console.log(`[Report Execution] No access token passed, loading offline session...`);
-      const sessionId = `offline_${shop}`;
-      console.log(`[Report Execution] Loading session with ID: ${sessionId}`);
+    const session = await shopify.sessionStorage.loadSession(sessionId);
 
-      const session = await shopify.sessionStorage.loadSession(sessionId);
-
-      if (!session) {
-        throw new Error(`No session found for shop: ${shop}. Session ID tried: ${sessionId}. Please reinstall the app.`);
-      }
-
-      if (!session.accessToken) {
-        throw new Error(`Session found but no access token for shop: ${shop}. Please reinstall the app.`);
-      }
-
-      tokenToUse = session.accessToken;
-      console.log(`[Report Execution] Offline session loaded successfully`);
-      console.log(`[Report Execution] Session ID: ${session.id}`);
-      console.log(`[Report Execution] Session shop: ${session.shop}`);
-      console.log(`[Report Execution] Session isOnline: ${session.isOnline}`);
-    } else {
-      console.log(`[Report Execution] Using passed access token (online session)`);
+    if (!session) {
+      throw new Error(`No offline session found for shop: ${shop}. Session ID tried: ${sessionId}. Please reinstall the app to create an offline access token.`);
     }
 
+    if (!session.accessToken) {
+      throw new Error(`Offline session found but no access token for shop: ${shop}. Please reinstall the app.`);
+    }
+
+    const tokenToUse = session.accessToken;
+    console.log(`[Report Execution] Offline session loaded successfully`);
+    console.log(`[Report Execution] Session ID: ${session.id}`);
+    console.log(`[Report Execution] Session shop: ${session.shop}`);
+    console.log(`[Report Execution] Session isOnline: ${session.isOnline}`);
     console.log(`[Report Execution] Access token present: ${!!tokenToUse}`);
     console.log(`[Report Execution] Access token length: ${tokenToUse?.length}`);
     console.log(`[Report Execution] Access token prefix: ${tokenToUse?.substring(0, 10)}...`);
@@ -364,20 +356,17 @@ export async function executeReport(
  */
 export async function executeReportManually(
   reportScheduleId: string,
-  shop: string,
-  accessToken: string
+  shop: string
 ): Promise<ExecuteReportResult> {
   console.log(`\n========== [MANUAL EXECUTION] START ==========`);
   console.log(`Report Schedule ID: ${reportScheduleId}`);
   console.log(`Shop: ${shop}`);
-  console.log(`Access Token: ${accessToken ? 'Present' : 'Missing'}`);
   console.log(`==============================================\n`);
 
   try {
     const result = await executeReport({
       reportScheduleId,
       shop,
-      accessToken,
     });
 
     console.log(`\n========== [MANUAL EXECUTION] END ==========`);
@@ -404,8 +393,7 @@ export async function executeReportManually(
  * Execute all reports that are due to run
  */
 export async function executeScheduledReports(
-  shop: string,
-  accessToken: string
+  shop: string
 ): Promise<{ executed: number; succeeded: number; failed: number }> {
   console.log(`[Report Execution] Checking for scheduled reports...`);
 
@@ -433,7 +421,6 @@ export async function executeScheduledReports(
       const result = await executeReport({
         reportScheduleId: report.id,
         shop,
-        accessToken,
       });
 
       if (result.success) {

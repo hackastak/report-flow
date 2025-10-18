@@ -77,25 +77,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
     console.log("Filters:", JSON.stringify(report.filters, null, 2));
     console.log("=======================================================\n");
 
-    // Ensure we have an access token
-    if (!session.accessToken) {
-      console.error("ERROR: Missing access token!");
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: "MISSING_ACCESS_TOKEN",
-            message: "Session access token is missing",
-          },
-        },
-        { status: 500 }
-      );
-    }
-
-    console.log("✅ Access token present, starting execution...");
+    console.log("✅ Starting execution...");
 
     // Execute report asynchronously (don't wait for completion)
-    executeReportManually(report.id, session.shop, session.accessToken)
+    // Note: executeReportManually will load the offline session token internally
+    executeReportManually(report.id, session.shop)
       .then((result) => {
         if (result.success) {
           console.log(`✅ Report execution completed successfully: ${result.historyId}`);

@@ -144,22 +144,20 @@ async function executeReportsForShop(
   let succeeded = 0;
   let failed = 0;
 
-  // Execute each report sequentially
-  for (const report of reports) {
-    try {
-      console.log(`[Scheduler] Executing report: ${report.name} (${report.id})`);
-      
-      const result = await executeScheduledReports(shop, session.accessToken);
-      
-      succeeded += result.succeeded;
-      failed += result.failed;
-    } catch (error) {
-      console.error(`[Scheduler] Failed to execute report ${report.id}:`, error);
-      failed++;
-    }
-  }
+  // Execute all scheduled reports for this shop
+  try {
+    console.log(`[Scheduler] Executing scheduled reports for shop: ${shop}`);
 
-  console.log(`[Scheduler] Completed for ${shop}: ${succeeded} succeeded, ${failed} failed`);
+    const result = await executeScheduledReports(shop);
+
+    succeeded += result.succeeded;
+    failed += result.failed;
+
+    console.log(`[Scheduler] Completed for ${shop}: ${succeeded} succeeded, ${failed} failed`);
+  } catch (error) {
+    console.error(`[Scheduler] Failed to execute reports for ${shop}:`, error);
+    failed += reports.length;
+  }
 }
 
 /**
