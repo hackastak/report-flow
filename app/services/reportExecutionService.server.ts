@@ -116,6 +116,21 @@ export async function executeReport(
     const sessionId = `offline_${shop}`;
     console.log(`[Report Execution] Loading session with ID: ${sessionId}`);
 
+    // Debug: Check what sessions exist in the database
+    console.log(`[Report Execution] Checking all sessions for shop: ${shop}`);
+    const allSessions = await prisma.session.findMany({
+      where: { shop },
+      select: { id: true, isOnline: true, accessToken: true, scope: true }
+    });
+    console.log(`[Report Execution] Found ${allSessions.length} sessions:`,
+      allSessions.map(s => ({
+        id: s.id,
+        isOnline: s.isOnline,
+        tokenPrefix: s.accessToken?.substring(0, 10),
+        scope: s.scope
+      }))
+    );
+
     const session = await shopify.sessionStorage.loadSession(sessionId);
 
     if (!session) {
