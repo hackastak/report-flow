@@ -16,7 +16,7 @@ const shopify = shopifyApp({
   authPathPrefix: "/auth",
   sessionStorage: new PrismaSessionStorage(prisma),
   distribution: AppDistribution.AppStore,
-  useOnlineTokens: false, // Use offline tokens for background jobs
+  useOnlineTokens: true, // This creates BOTH online and offline tokens - offline tokens are needed for background jobs
   ...(process.env.SHOP_CUSTOM_DOMAIN
     ? { customShopDomains: [process.env.SHOP_CUSTOM_DOMAIN] }
     : {}),
