@@ -138,6 +138,35 @@ export async function executeReport(
     console.log(`[Report Execution] Access token prefix: ${tokenToUse?.substring(0, 10)}...`);
     console.log(`[Report Execution] API Version: ${apiVersion}`);
 
+    // Test the token with a simple query first
+    console.log(`[Report Execution] Testing access token with simple shop query...`);
+    try {
+      const testUrl = `https://${shop}/admin/api/${apiVersion}/graphql.json`;
+      const testResponse = await fetch(testUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": tokenToUse,
+        },
+        body: JSON.stringify({
+          query: `query { shop { id name myshopifyDomain } }`,
+        }),
+      });
+
+      console.log(`[Report Execution] Test query status: ${testResponse.status}`);
+      const testResult = await testResponse.json();
+      console.log(`[Report Execution] Test query result:`, JSON.stringify(testResult, null, 2));
+
+      if (testResult.errors) {
+        throw new Error(`Token test failed: ${JSON.stringify(testResult.errors)}`);
+      }
+
+      console.log(`[Report Execution] ✅ Token is valid! Shop: ${testResult.data?.shop?.name}`);
+    } catch (error) {
+      console.error(`[Report Execution] ❌ Token test failed:`, error);
+      throw new Error(`Access token validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
     // Create a custom admin client that uses the access token directly
     const admin = {
       graphql: async (query: string, options?: { variables?: any }) => {
@@ -145,6 +174,9 @@ export async function executeReport(
 
         console.log(`[Report Execution] Making GraphQL request to: ${url}`);
         console.log(`[Report Execution] Using access token: ${tokenToUse.substring(0, 10)}...`);
+        console.log(`[Report Execution] Full access token: ${tokenToUse}`);
+        console.log(`[Report Execution] Token type check: starts with 'shpat_'? ${tokenToUse.startsWith('shpat_')}`);
+        console.log(`[Report Execution] Shop domain: ${shop}`);
 
         const response = await fetch(url, {
           method: "POST",
@@ -158,8 +190,12 @@ export async function executeReport(
           }),
         });
 
+        console.log(`[Report Execution] Response status: ${response.status}`);
+        console.log(`[Report Execution] Response headers:`, Object.fromEntries(response.headers.entries()));
+
         if (!response.ok) {
           const errorText = await response.text();
+          console.log(`[Report Execution] Error response body: ${errorText}`);
           throw new Error(`GraphQL request failed (${response.status}): ${errorText}`);
         }
 
