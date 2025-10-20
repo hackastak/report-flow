@@ -48,10 +48,24 @@ const SMTP_CONFIG = {
     user: process.env.SMTP_USER || "",
     pass: process.env.SMTP_PASSWORD || "",
   },
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 10000, // 10 seconds
+  socketTimeout: 10000, // 10 seconds
 };
 
 const FROM_EMAIL = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@reportflow.app";
 const FROM_NAME = process.env.SMTP_FROM_NAME || "Report Flow";
+
+// Log SMTP configuration on startup (without password)
+console.log("[Email Service] SMTP Configuration:", {
+  host: SMTP_CONFIG.host,
+  port: SMTP_CONFIG.port,
+  secure: SMTP_CONFIG.secure,
+  user: SMTP_CONFIG.auth.user,
+  hasPassword: !!SMTP_CONFIG.auth.pass,
+  from: FROM_EMAIL,
+  fromName: FROM_NAME,
+});
 
 /**
  * Create nodemailer transporter
@@ -132,14 +146,25 @@ export async function sendReportEmail(
       });
 
       emailsSent++;
-      console.log(`Email sent successfully to ${recipient.email}`);
+      console.log(`[Email Service] ✅ Email sent successfully to ${recipient.email}`);
     } catch (error) {
       emailsFailed++;
       const errorMessage = `Failed to send email to ${recipient.email}: ${
         error instanceof Error ? error.message : "Unknown error"
       }`;
       errors.push(errorMessage);
-      console.error(errorMessage);
+      console.error(`[Email Service] ❌ ${errorMessage}`);
+
+      // Log full error details for debugging
+      if (error instanceof Error) {
+        console.error(`[Email Service] Error details:`, {
+          name: error.name,
+          message: error.message,
+          code: (error as any).code,
+          command: (error as any).command,
+          stack: error.stack,
+        });
+      }
     }
   }
 
