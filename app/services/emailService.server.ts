@@ -48,9 +48,13 @@ const SMTP_CONFIG = {
     user: process.env.SMTP_USER || "",
     pass: process.env.SMTP_PASSWORD || "",
   },
-  connectionTimeout: 10000, // 10 seconds
-  greetingTimeout: 10000, // 10 seconds
-  socketTimeout: 10000, // 10 seconds
+  connectionTimeout: 30000, // 30 seconds - increased for Railway
+  greetingTimeout: 30000, // 30 seconds
+  socketTimeout: 30000, // 30 seconds
+  tls: {
+    // Don't fail on invalid certs (some SMTP servers have issues)
+    rejectUnauthorized: false,
+  },
 };
 
 const FROM_EMAIL = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@reportflow.app";
@@ -63,8 +67,15 @@ console.log("[Email Service] SMTP Configuration:", {
   secure: SMTP_CONFIG.secure,
   user: SMTP_CONFIG.auth.user,
   hasPassword: !!SMTP_CONFIG.auth.pass,
+  passwordLength: SMTP_CONFIG.auth.pass?.length,
   from: FROM_EMAIL,
   fromName: FROM_NAME,
+  envCheck: {
+    SMTP_HOST: !!process.env.SMTP_HOST,
+    SMTP_PORT: !!process.env.SMTP_PORT,
+    SMTP_USER: !!process.env.SMTP_USER,
+    SMTP_PASSWORD: !!process.env.SMTP_PASSWORD,
+  }
 });
 
 /**
@@ -72,6 +83,31 @@ console.log("[Email Service] SMTP Configuration:", {
  */
 function createTransporter(): Transporter {
   return nodemailer.createTransport(SMTP_CONFIG);
+}
+
+/**
+ * Test SMTP connection
+ */
+export async function testSMTPConnection(): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log("[Email Service] Testing SMTP connection...");
+    const transporter = createTransporter();
+    await transporter.verify();
+    console.log("[Email Service] ✅ SMTP connection successful");
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("[Email Service] ❌ SMTP connection failed:", errorMessage);
+    if (error instanceof Error) {
+      console.error("[Email Service] Error details:", {
+        name: error.name,
+        message: error.message,
+        code: (error as any).code,
+        stack: error.stack,
+      });
+    }
+    return { success: false, error: errorMessage };
+  }
 }
 
 /**
