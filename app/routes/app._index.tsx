@@ -2,7 +2,7 @@ import type {
   HeadersFunction,
   LoaderFunctionArgs,
 } from "react-router";
-import { useLoaderData, useNavigate } from "react-router";
+import { useLoaderData, useNavigate, Link } from "react-router";
 import { useState, useEffect } from "react";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
@@ -102,9 +102,16 @@ export default function Index() {
       />
 
       <s-page heading="Report Flow">
-        <s-link slot="primary-action" href="/app/reports">
-          <s-button variant="primary">Create Scheduled Report</s-button>
-        </s-link>
+      <s-section>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+          <s-text variant="subdued">
+            Automate your Shopify analytics reporting
+          </s-text>
+          <Link to="/app/reports">
+            <s-button variant="primary">Create Scheduled Report</s-button>
+          </Link>
+        </div>
+      </s-section>
 
       <s-section heading="Welcome to Report Flow 📊">
         <s-paragraph>
