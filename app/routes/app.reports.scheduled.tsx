@@ -13,6 +13,7 @@ import { REPORT_TYPES } from "../config/reportTypes";
 import { prisma } from "../db.server";
 import { getIcon } from "../utils/iconMapper";
 import { BarChart3 } from "lucide-react";
+import { ActionsMenu } from "../components/ActionsMenu";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
@@ -308,42 +309,19 @@ export default function ScheduledReports() {
                       )}
                     </td>
                     <td style={{ padding: "0.75rem" }}>
-                      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                        <Link to={`/app/reports/${report.id}/history`}>
-                          <s-button variant="tertiary">History</s-button>
-                        </Link>
-                        <s-button
-                          variant="tertiary"
-                          onClick={() => handleEdit(report.id)}
-                          disabled={runningId === report.id || deletingId === report.id || togglingId === report.id}
-                        >
-                          Edit
-                        </s-button>
-                        <s-button
-                          variant="primary"
-                          onClick={() => handleRunNow(report.id, report.name)}
-                          disabled={runningId === report.id || deletingId === report.id || togglingId === report.id || !report.isActive}
-                          loading={runningId === report.id}
-                        >
-                          {runningId === report.id ? "Running..." : "Run Now"}
-                        </s-button>
-                        <s-button
-                          variant="tertiary"
-                          onClick={() => handleToggleActive(report.id, report.name, report.isActive)}
-                          disabled={runningId === report.id || deletingId === report.id || togglingId === report.id}
-                          loading={togglingId === report.id}
-                        >
-                          {togglingId === report.id ? "Updating..." : (report.isActive ? "Pause" : "Resume")}
-                        </s-button>
-                        <s-button
-                          variant="tertiary"
-                          onClick={() => handleDelete(report.id)}
-                          disabled={deletingId === report.id || runningId === report.id || togglingId === report.id}
-                          loading={deletingId === report.id}
-                        >
-                          {deletingId === report.id ? "Deleting..." : "Delete"}
-                        </s-button>
-                      </div>
+                      <ActionsMenu
+                        reportId={report.id}
+                        reportName={report.name}
+                        isActive={report.isActive}
+                        onEdit={handleEdit}
+                        onRunNow={handleRunNow}
+                        onToggleActive={handleToggleActive}
+                        onDelete={handleDelete}
+                        onViewHistory={(id) => navigate(`/app/reports/${id}/history`)}
+                        isRunning={runningId === report.id}
+                        isDeleting={deletingId === report.id}
+                        isToggling={togglingId === report.id}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -385,17 +363,32 @@ export default function ScheduledReports() {
             <s-text weight="bold">Need Help?</s-text>
             <div style={{ marginTop: "0.5rem" }}>
               <s-text variant="subdued">
-                • Click "Edit" to modify a report's configuration
+                • Click the <s-text weight="bold">⋮</s-text> button in the Actions column to see all available actions
               </s-text>
             </div>
             <div style={{ marginTop: "0.25rem" }}>
               <s-text variant="subdued">
-                • Click "Run Now" to execute a report immediately
+                • Use <s-text weight="bold">View History</s-text> to see past executions
               </s-text>
             </div>
             <div style={{ marginTop: "0.25rem" }}>
               <s-text variant="subdued">
-                • Click "Delete" to remove a scheduled report
+                • Use <s-text weight="bold">Edit</s-text> to modify a report's configuration
+              </s-text>
+            </div>
+            <div style={{ marginTop: "0.25rem" }}>
+              <s-text variant="subdued">
+                • Use <s-text weight="bold">Run Now</s-text> to execute a report immediately
+              </s-text>
+            </div>
+            <div style={{ marginTop: "0.25rem" }}>
+              <s-text variant="subdued">
+                • Use <s-text weight="bold">Pause/Resume</s-text> to control automatic scheduling
+              </s-text>
+            </div>
+            <div style={{ marginTop: "0.25rem" }}>
+              <s-text variant="subdued">
+                • Use <s-text weight="bold">Delete</s-text> to remove a scheduled report
               </s-text>
             </div>
           </div>
