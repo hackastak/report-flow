@@ -107,34 +107,13 @@ export async function executeReport(
 
     console.log(`[Report Execution] Filters:`, JSON.stringify(filtersObj, null, 2));
 
-    // Create authenticated admin GraphQL client
-    console.log(`[Report Execution] Creating authenticated admin client for shop: ${shop}`);
-
-    // ALWAYS use offline session token for API requests (even for manual runs)
-    // Online tokens from authenticate.admin() are not suitable for background API calls
-    console.log(`[Report Execution] Loading offline session for API access...`);
+    // Load offline session token for API requests
+    // Note: Offline tokens are required for background API calls
     const sessionId = `offline_${shop}`;
-    console.log(`[Report Execution] Loading session with ID: ${sessionId}`);
-
-    // Debug: Check what sessions exist in the database
-    console.log(`[Report Execution] Checking all sessions for shop: ${shop}`);
-    const allSessions = await prisma.session.findMany({
-      where: { shop },
-      select: { id: true, isOnline: true, accessToken: true, scope: true }
-    });
-    console.log(`[Report Execution] Found ${allSessions.length} sessions:`,
-      allSessions.map(s => ({
-        id: s.id,
-        isOnline: s.isOnline,
-        tokenPrefix: s.accessToken?.substring(0, 10),
-        scope: s.scope
-      }))
-    );
-
     const session = await shopify.sessionStorage.loadSession(sessionId);
 
     if (!session) {
-      throw new Error(`No offline session found for shop: ${shop}. Session ID tried: ${sessionId}. Please reinstall the app to create an offline access token.`);
+      throw new Error(`No offline session found for shop: ${shop}. Please reinstall the app to create an offline access token.`);
     }
 
     if (!session.accessToken) {
@@ -142,56 +121,11 @@ export async function executeReport(
     }
 
     const tokenToUse = session.accessToken;
-    console.log(`[Report Execution] Offline session loaded successfully`);
-    console.log(`[Report Execution] Session ID: ${session.id}`);
-    console.log(`[Report Execution] Session shop: ${session.shop}`);
-    console.log(`[Report Execution] Session isOnline: ${session.isOnline}`);
-    console.log(`[Report Execution] Session scope: ${session.scope}`);
-    console.log(`[Report Execution] Session expires: ${session.expires}`);
-    console.log(`[Report Execution] Access token present: ${!!tokenToUse}`);
-    console.log(`[Report Execution] Access token length: ${tokenToUse?.length}`);
-    console.log(`[Report Execution] Access token prefix: ${tokenToUse?.substring(0, 10)}...`);
-    console.log(`[Report Execution] API Version: ${apiVersion}`);
-
-    // Test the token with a simple query first
-    console.log(`[Report Execution] Testing access token with simple shop query...`);
-    try {
-      const testUrl = `https://${shop}/admin/api/${apiVersion}/graphql.json`;
-      const testResponse = await fetch(testUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Access-Token": tokenToUse,
-        },
-        body: JSON.stringify({
-          query: `query { shop { id name myshopifyDomain } }`,
-        }),
-      });
-
-      console.log(`[Report Execution] Test query status: ${testResponse.status}`);
-      const testResult = await testResponse.json();
-      console.log(`[Report Execution] Test query result:`, JSON.stringify(testResult, null, 2));
-
-      if (testResult.errors) {
-        throw new Error(`Token test failed: ${JSON.stringify(testResult.errors)}`);
-      }
-
-      console.log(`[Report Execution] ✅ Token is valid! Shop: ${testResult.data?.shop?.name}`);
-    } catch (error) {
-      console.error(`[Report Execution] ❌ Token test failed:`, error);
-      throw new Error(`Access token validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
 
     // Create a custom admin client that uses the access token directly
     const admin = {
       graphql: async (query: string, options?: { variables?: any }) => {
         const url = `https://${shop}/admin/api/${apiVersion}/graphql.json`;
-
-        console.log(`[Report Execution] Making GraphQL request to: ${url}`);
-        console.log(`[Report Execution] Using access token: ${tokenToUse.substring(0, 10)}...`);
-        console.log(`[Report Execution] Full access token: ${tokenToUse}`);
-        console.log(`[Report Execution] Token type check: starts with 'shpat_'? ${tokenToUse.startsWith('shpat_')}`);
-        console.log(`[Report Execution] Shop domain: ${shop}`);
 
         const response = await fetch(url, {
           method: "POST",
@@ -205,12 +139,8 @@ export async function executeReport(
           }),
         });
 
-        console.log(`[Report Execution] Response status: ${response.status}`);
-        console.log(`[Report Execution] Response headers:`, Object.fromEntries(response.headers.entries()));
-
         if (!response.ok) {
           const errorText = await response.text();
-          console.log(`[Report Execution] Error response body: ${errorText}`);
           throw new Error(`GraphQL request failed (${response.status}): ${errorText}`);
         }
 

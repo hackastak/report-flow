@@ -60,54 +60,11 @@ const SMTP_CONFIG = {
 const FROM_EMAIL = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@reportflow.app";
 const FROM_NAME = process.env.SMTP_FROM_NAME || "Report Flow";
 
-// Log SMTP configuration on startup (without password)
-console.log("[Email Service] SMTP Configuration:", {
-  host: SMTP_CONFIG.host,
-  port: SMTP_CONFIG.port,
-  secure: SMTP_CONFIG.secure,
-  user: SMTP_CONFIG.auth.user,
-  hasPassword: !!SMTP_CONFIG.auth.pass,
-  passwordLength: SMTP_CONFIG.auth.pass?.length,
-  from: FROM_EMAIL,
-  fromName: FROM_NAME,
-  envCheck: {
-    SMTP_HOST: !!process.env.SMTP_HOST,
-    SMTP_PORT: !!process.env.SMTP_PORT,
-    SMTP_USER: !!process.env.SMTP_USER,
-    SMTP_PASSWORD: !!process.env.SMTP_PASSWORD,
-  }
-});
-
 /**
  * Create nodemailer transporter
  */
 function createTransporter(): Transporter {
   return nodemailer.createTransport(SMTP_CONFIG);
-}
-
-/**
- * Test SMTP connection
- */
-export async function testSMTPConnection(): Promise<{ success: boolean; error?: string }> {
-  try {
-    console.log("[Email Service] Testing SMTP connection...");
-    const transporter = createTransporter();
-    await transporter.verify();
-    console.log("[Email Service] ✅ SMTP connection successful");
-    return { success: true };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("[Email Service] ❌ SMTP connection failed:", errorMessage);
-    if (error instanceof Error) {
-      console.error("[Email Service] Error details:", {
-        name: error.name,
-        message: error.message,
-        code: (error as any).code,
-        stack: error.stack,
-      });
-    }
-    return { success: false, error: errorMessage };
-  }
 }
 
 /**
@@ -189,18 +146,7 @@ export async function sendReportEmail(
         error instanceof Error ? error.message : "Unknown error"
       }`;
       errors.push(errorMessage);
-      console.error(`[Email Service] ❌ ${errorMessage}`);
-
-      // Log full error details for debugging
-      if (error instanceof Error) {
-        console.error(`[Email Service] Error details:`, {
-          name: error.name,
-          message: error.message,
-          code: (error as any).code,
-          command: (error as any).command,
-          stack: error.stack,
-        });
-      }
+      console.error(`[Email Service] ${errorMessage}`);
     }
   }
 
