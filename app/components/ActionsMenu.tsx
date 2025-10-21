@@ -36,12 +36,47 @@ export function ActionsMenu({
   isToggling = false,
 }: ActionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const isDisabled = isRunning || isDeleting || isToggling;
 
-  // Close menu when clicking outside
+  // Calculate menu position when opening
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const buttonRect = buttonRef.current.getBoundingClientRect();
+      const menuWidth = 192; // 12rem in pixels
+      const menuHeight = 280; // Approximate height
+
+      // Calculate position
+      let top = buttonRect.bottom + 4; // 4px gap below button
+      let left = buttonRect.right - menuWidth; // Align right edge with button
+
+      // Adjust if menu would go off-screen
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+
+      // If menu goes below viewport, show it above the button
+      if (top + menuHeight > viewportHeight) {
+        top = buttonRect.top - menuHeight - 4;
+      }
+
+      // If menu goes off left edge, align with left edge of button
+      if (left < 8) {
+        left = buttonRect.left;
+      }
+
+      // If menu goes off right edge, align with right edge of viewport
+      if (left + menuWidth > viewportWidth - 8) {
+        left = viewportWidth - menuWidth - 8;
+      }
+
+      setMenuPosition({ top, left });
+    }
+  }, [isOpen]);
+
+  // Close menu when clicking outside or scrolling
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -54,10 +89,16 @@ export function ActionsMenu({
       }
     }
 
+    function handleScroll() {
+      setIsOpen(false);
+    }
+
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      window.addEventListener("scroll", handleScroll, true);
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
+        window.removeEventListener("scroll", handleScroll, true);
       };
     }
   }, [isOpen]);
@@ -109,15 +150,15 @@ export function ActionsMenu({
         <div
           ref={menuRef}
           style={{
-            position: "absolute",
-            top: "calc(100% + 0.25rem)",
-            right: 0,
+            position: "fixed",
+            top: `${menuPosition.top}px`,
+            left: `${menuPosition.left}px`,
             minWidth: "12rem",
             backgroundColor: "white",
             border: "1px solid var(--s-color-border)",
             borderRadius: "var(--s-border-radius-base)",
             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-            zIndex: 1000,
+            zIndex: 10000,
             overflow: "hidden",
           }}
         >
